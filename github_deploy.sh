@@ -4,6 +4,13 @@ set -euo pipefail
 SRC_BRANCH=source
 TRG_BRANCH=master
 
+STATUS="$(git status --porcelain)"
+if [ -n "$STATUS" ]; then
+	echo "Uncommitted changes"
+	echo "$STATUS"
+	exit
+fi
+
 git checkout $SRC_BRANCH
 MSG=$(git log -n 1 --format="format:%h %f")
 RESULT=$(nix-build)
