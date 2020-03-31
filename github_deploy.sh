@@ -1,15 +1,18 @@
 #!/usr/bin/env sh
 set -euo pipefail
 
-git checkout master
+SRC_BRANCH=source
+TRG_BRANCH=master
+
+git checkout $SRC_BRANCH
 MSG=$(git log -n 1 --format="format:%h %f")
 RESULT=$(nix-build)
 echo $RESULT
-git checkout gh-pages
+git checkout $TRG_BRANCH
 rm -rf *
 cp -r $RESULT/* .
 chmod u+w . -R
 git add .
 git commit -m "$MSG"
 git push
-git checkout master
+git checkout $SRC_BRANCH
