@@ -20,7 +20,7 @@ I'm not sure if I'll ever actually finish a single post in _Effective Haskell_, 
 [^code]: We can actually write incomprehensible code _without_ them!
 
 In this inaugural post, we will be studying a technique (ostensibly) for iterating over record fields and adding metadata to them, without using Template Haskell or Generics.
-I'm calling it a _[descriptor](https://en.wikipedia.org/wiki/Data_descriptor)_ because that's what it reminds me of, but if somebody else has named it before me, please let me know.
+I'm calling it a _[descriptor](https://en.wikipedia.org/wiki/Data_descriptor)_ because that's what it reminds me of, but if somebody else has named it before, or just knows a more fitting name, please let me know.
 
 ## Motivating example
 
@@ -44,12 +44,12 @@ The shaders (GPU code) are written in a different language, and compiled, extern
 So from this Haskell record of shader arguments, the library then needs to:
 
 1. Reject types that the GPU does not support
-1. Match up these arguments to the shader code
-2. Make sure the types of the variables match
-3. Check for missing/unbound/duplicate variables
-4. Get the locations of those variables on the GPU
-5. Assign initial values
-6. Provide a safe way to update the variables at runtime
+2. Match up these arguments to the shader code
+3. Make sure the types of the variables match
+4. Check for missing/unbound/duplicate variables
+5. Get the locations of those variables on the GPU
+6. Assign initial values
+7. Provide a safe way to update the variables at runtime
 
 All of that is handled by `createProgram`, which only requires that the user pass a _descriptor_ of the `Blinn` record:
 ```haskell
@@ -96,7 +96,7 @@ ask label parse check = go where
       _ -> putStrLn "Invalid response" >> go
 ```
 
-And the user then assembles this into a way to ask for an entire _record_:
+And the user then uses `Applicative` to assemble into a function asking for an entire record:
 
 ```haskell
 data Person = Person
@@ -110,9 +110,8 @@ askPerson = Person
   <*> ask "age"  readMaybe (\a -> a >= 18 && a <= 99)
 ```
 
-The arguments to `ask` in `askPerson` actually describe general properties of the fields of `Person` that might be useful in other contexts.
-
 This is the basis for our descriptor.
+The arguments to `ask` in `askPerson` describe general properties of the fields of `Person` that might be useful in other contexts.
 We turn `askPerson` into a descriptor as follows:
 
 1. we factor out the `ask` so it takes a general `field` function as an argument
@@ -128,7 +127,7 @@ descPerson field = Person
 
 `Descriptor` is a type synonym.
 Its definition is below, but you have all the information to try writing it yourself, if you're looking for an exercise.
-You're going to need the `RankNTypes` extension.
+You're going to need `RankNTypes`.
 
 ```haskell
 type Descriptor s = forall m. Applicative m
@@ -141,7 +140,7 @@ type Descriptor s = forall m. Applicative m
   -> m s
 ```
 
-So, we can now turn a `Descriptor` back into `askPerson` as follows:
+We can of course turn a `Descriptor` back into the original `askPerson`:
 ```haskell
 askDesc :: Descriptor p -> IO p
 askDesc desc = desc (const ask)
@@ -149,11 +148,10 @@ askDesc desc = desc (const ask)
 askPerson :: IO Person
 askPerson = askDesc descPerson
 ```
-
 But what have we _gained_?
 Of course, we can now swap out `ask` for a similar function.
 More interestingly, because we now have the record field accessor, we can reuse the arguments to `field` and work with _existing_ data.
-For example, we can _only_ perform the validation, in a pure way:
+For example, we can perform _just_ the validation, in a pure way:
 ```haskell
 validate :: Descriptor p -> p -> [String]
 validate desc pers = execWriter $ desc $ \field lbl _ p ->
@@ -175,8 +173,9 @@ fields desc = execWriter $ desc $ \_ lbl _ _ ->
 ["name", "age"]
 ```
 
-This can be useful, but ultimately at this point it's hard to find a situation where it's worth the additional complexity.
-Moreover, there are some issues here.
+And that's a descriptor; a function applied to each field of a record, with some arguments, polymorphic over any applicative.
+What arguments `field` depends on what you use the descriptor for, but this outlines the general idea.
+It's a pretty neat trick, but unfortunately, there are some issues here:
 
 1. We can give nonsensical `Descriptor`s that still type check:
 ```haskell
@@ -190,7 +189,7 @@ Where this technique really comes into its own, however, is when using _Higher-K
 
 ## Descriptors with Higher-Kinded Data
 
-Higher-Kinded Data is where you parameterize record fields over some functor, like this:
+[Higher-Kinded Data](https://reasonablypolymorphic.com/blog/higher-kinded-data/) is a pattern where you parameterize record fields over some functor, like this:
 
 ```haskell
 data HPerson f = HPerson
@@ -198,8 +197,10 @@ data HPerson f = HPerson
   , hAge  :: f Int
   }
 ```
+With HKD, `HPerson Identity` is equivalent to the original `Person` record, but we also get `HPerson Maybe` that might have missing fields, `HPerson (Const a)` that has a value of type `a` for every field, etc.
 
-We can apply the idea of the descriptor almost verbatim, our new `descPerson` and `askDesc` look pretty much the same at the term level:
+We can apply the idea of the descriptor to HKD almost verbatim.
+Our new `descPerson` and `askDesc` look pretty much the same at the term level:
 
 ```haskell
 descHPerson :: HDescriptor HPerson
@@ -211,8 +212,8 @@ askHDesc :: HDescriptor s -> IO (s Identity)
 askHDesc desc = desc $ \_ lbl parse check -> Identity <$> ask lbl parse check
 ```
 
-The types have changed a bit, though.
-Again, it might be a good exercise to write `HDescriptor` by yourself before moving on.
+In `HDescriptor s` our `s` is now polymorphic over some base functor.
+This is its type:
 
 ```haskell
 type HDescriptor s = forall m f. Applicative m
@@ -256,40 +257,45 @@ hParseCheck desc s = runIdentity $ desc $ \f _ parse check -> pure $
 ### HKD type classes
 
 When you use HKD, you typically want to be able to `map`/`traverse`/`<*>` the fields of your record.
-There are libraries like `higgledy`, `barbies`, `barbies-th`, or `hkd` that help you derive the required instances (and other niceties).
-We can easily show that a descriptor gives you the same power:
+There are libraries like [`higgledy`](https://hackage.haskell.org/package/higgledy), [`barbies`](https://hackage.haskell.org/package/barbies), [`barbies-th`](https://hackage.haskell.org/package/barbies-th), or [`hkd`](https://hackage.haskell.org/package/hkd) that help you derive the required instances (and other nice things).
+We can show that a descriptor gives you the same power:
 ```haskell
-bmap :: HDescriptor s ->
+dmap :: HDescriptor s ->
   (forall a. f a -> g a) -> s f -> s g
-bmap desc fn s = runIdentity $ desc $ \f _ _ _ -> pure $ fn (f s)
+dmap desc fn s = runIdentity $
+  desc $ \f _ _ _ -> pure $ fn (f s)
 
-btraverse :: Applicative m => HDescriptor s ->
+dtraverse :: Applicative m => HDescriptor s ->
   (forall a. f a -> m (g a)) -> s f -> m (s g)
-btraverse desc fn s = desc $ \f _ _ _ -> fn (f s)
+dtraverse desc fn s =
+  desc $ \f _ _ _ -> fn (f s)
 
-bpure :: HDescriptor s ->
+dpure :: HDescriptor s ->
   (forall a. f a) -> s f
-bpure desc a = runIdentity $ desc $ \_ _ _ _ -> pure a
+dpure desc a = runIdentity $
+  desc $ \_ _ _ _ -> pure a
 
-bliftA2 :: HDescriptor s ->
+dliftA2 :: HDescriptor s ->
   (forall x. f x -> g x -> h x) -> s f -> s g -> s h
-bliftA2 desc fn sf sg = runIdentity $ desc $ \f _ _ _ -> pure $ fn (f sf) (f sg)
+dliftA2 desc fn sf sg = runIdentity $
+  desc $ \f _ _ _ -> pure $ fn (f sf) (f sg)
 ```
 
-So, descriptors give you similar power to the above libraries, but with a very different typical use case.
+This doesn't necessarily mean that descriptors compete with the libraries above.
+The actual use cases are different, I think descriptors work best as an interface between a library and its users.
 
 ## Structs and FFI
 
-A record field accessor of an HKD has type `forall f. s f -> f a`.
-Before we continue, to avoid having to quantify the `f` every time, we're going to assign it a type signature:
+Briefly, before we continue: a record field accessor of an HKD has type `forall f. s f -> f a`.
+To avoid having to quantify the `f` every time, we're going to assign it a type signature:
 ```haskell
 type Field s a = forall f. s f -> f a
 ```
 For example, `hName :: Field HPerson String` and `hAge :: Field HPerson Int`.
 
 ### Updating a single field
-One of the issues with a normal `Storable`-based FFI is that, even if you define a `Storable` instance for structs, you cannot do any field-wise updates.
-However, with HKD we can emulate it, as follows:
+One of the issues with normal `Storable`-based FFI is that, even if you define a `Storable` instance for a user-defined struct, you cannot perform any field-wise updates on it.
+With HKD we can emulate it however, as follows:
 ```haskell
 data MyStruct f = MyStruct
   { versionMajor        :: f Int
@@ -308,28 +314,30 @@ setField (SPtr base offsets) field = poke ptr
   where
     ptr = plusPtr base . getConst . field $ offsets
 ```
-We can now update a single field using
+As you can see, the trick is to use `MyStruct (Const Int)` to store the offset of every field.
+We can then update a single field using
 ```haskell
 setField ptr baconNumber 1
+
 -- Or, if you want to get fancy,
 let ($=) :: Storable a => Field struct a -> a -> ReaderT (SPtr struct) IO ()
-    ($=) ...
-
+    ($=) = ...
 flip runReaderT ptr $ do
   versionMajor $= 2
   versionMinor $= 1
 ```
+The field accessors of `MyStruct` now double as field accessors for our _foreign_ struct.
 I'm leaving `getField` as an exercise, but it works the same way.
 
 ### Constructing the `SPtr`
 Where does the `SPtr` actually come from?
 As you might have guessed, we can make one with a descriptor.
 ```haskell
-ptr <- newSPtr $ \f -> MyStruct
-  <$> f versionMajor        1
-  <*> f versionMinor        9
-  <*> f frictionCoefficient 0.9
-  <*> f baconNumber         0
+ptr <- newSPtr $ \field -> MyStruct
+  <$> field versionMajor        1
+  <*> field versionMinor        9
+  <*> field frictionCoefficient 0.9
+  <*> field baconNumber         0
 ```
 The second argument to `f` is the initial value of each field.
 
@@ -345,7 +353,7 @@ newSPtr desc = do
     (offsets, size) = flip runState 0 $
       desc $ \_ a -> state (\s -> (Const s, s + sizeOf a))
 ```
-Again, if you want, try writing `SDescriptor` yourself if you're looking for an exercise.
+What makes `SDescriptor` different from our previous descriptors is that it has a type class constraint on the `field` function:
 ```haskell
 type SDescriptor struct = forall m f. Applicative m
   => ( forall a. Storable a
@@ -355,10 +363,10 @@ type SDescriptor struct = forall m f. Applicative m
      )
   -> m (struct f)
 ```
-
-I'd like to emphasize that the descriptor has a `Storable` constraint in it.
 This means that, as soon as one of the fields of `MyStruct` is _not_ `Storable`, you cannot write a `SDescriptor` for it.
 Conversely, the existence of the `SDescriptor MyStruct` automatically proves that every field of `MyStruct` is `Storable`.
+For example, you could not add a `String` field to `MyStruct`.
+That's not a fundamental issue, you might find some ideas for how to deal with that in the section on arrays below.
 
 For additional exercises, you could try adding `setAll :: struct Identity -> IO ()`, `setSome :: struct Maybe -> IO ()`, and `getAll :: IO (struct Identity)` as fields to `SPtr`.
 
@@ -369,7 +377,7 @@ The data definition is fairly straightforward, no different from how you would n
 ```haskell
 data MySuperStruct f = MySuperStruct
   { someInt :: f Int
-  , nestedData :: MyStruct f
+  , nestedData :: MySubStruct f
   }
 ```
 
@@ -378,7 +386,7 @@ As for the descriptor itself, you simply call the descriptor for the nested stru
 descMySuperStruct :: SDescriptor MySuperStruct
 descMySuperStruct field = MySuperStruct
     <$> field someInt 1
-    <*> descMyStruct (\f -> field (f . nestedData))
+    <*> descMySubStruct (\f -> field (f . nestedData))
 ```
 
 ### Arrays
@@ -393,14 +401,17 @@ data Image fArr fPrim = Image
   , imgData :: fArr Word8
   }
 ```
-Both of these type variables get a corresponding function in the descriptor, the one for arrays taking an extra argument indicating the array size:
+Correspondingly, our descriptor now takes two function arguments, with the one for arrays taking an extra one indicating the size:
 ```haskell
 myArrStructDescriptor :: ArrDescriptor MyStructWithArrays
-myArrStructDescriptor mkArray mkField = MyStructWithArrays
-  <$> mkField imgW 99
-  <*> mkField imgH 99
-  <*> mkArray imgData (99 * 99 * 3) 0
-
+myArrStructDescriptor array field = MyStructWithArrays
+  <$> field imgW 99
+  <*> field imgH 99
+  <*> array imgData (99 * 99 * 3) 0
+```
+I'll give the type of `ArrDescriptor` below for completeness' sake, but even more than before it's not about the specifics of this approach, but the general idea; that you can add `f`s to correspond to different interfaces, and add a way to construct each in your descriptor.
+In this case the difference is between primitive updates in `fPrim` and indexed updates in `fArr`, but you could, for example, also have read/write-only fields.
+```haskell
 type ArrDescriptor struct = forall m fArr fField. Applicative m
   => ( forall a. Storable a
               => (forall gArr gField. struct gArr gField -> gArr a)
@@ -419,13 +430,15 @@ type ArrDescriptor struct = forall m fArr fField. Applicative m
 [^arr]: Or more. You might want to make a special case for `String` types, or dynamically sized arrays...
 
 ## Conclusion
+
 When you're in the trenches of a tutorial like this, it can be hard to see the forest for the trees.
 Especially when working with nested structs and arrays, our types got pretty involved.
 However, I hope I have also been able to convince you that when this approach works, it can work _really_ well.
 The library author (person who defines the descriptor) gets a lot of power, and the user (person who implements the descriptor) only has to define a single generic traversal.
 Furthermore, since we aren't using any existing abstractions, we get to completely tailor it to our own needs, as you saw in the array example.
 
-There are a lot of ways to experiment.
-Maybe you want to stick descriptors in a `newtype` and provide composition functions.
-Maybe they belong in a type class, to make sure every type only has exactly one.
-Figure it out.
+Ultimately, I'm not sure if the ideas here are going to be useful for many people.
+I have worked with libraries that horribly over-complicated their FFI that I know there are at least _some_ people who might find this useful, but that's not really the point of this post.
+Most importantly, I think it's a neat example of how we can write wonderful abstract interfaces with _just_ `RankNTypes` and some polymorphism in the right places.
+
+If you have any questions or criticism, feel free to contact me.
