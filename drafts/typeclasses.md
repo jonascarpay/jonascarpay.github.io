@@ -2,7 +2,7 @@
 title: Type Classes
 subtitle: Effective Haskell 1
 abstract:
-  Type classes are horrible and you should not use them.
+  Don't write classes -- write instances
 tags:
   effective haskell typeclass
 ---
@@ -18,8 +18,7 @@ Instead, let's all try to write [Simple Haskell](https://www.simplehaskell.org/)
 As much as I love GADTs, I share the sentiment of the above posts.
 Without the "avoid success at all costs" motto, Haskell would not have been what it is today.
 In production, however, avoiding success at all costs is not a viable philosophy.
-Nobody wants to read a paper to make sense of the code you wrote.
-Professional, responsible software engineering is not about being smart, it's about being wise.
+Responsible software engineering is not about being smart, it's about being wise.
 
 My issue with the posts above is this: _actually writing_ "Simple", "Junior", or "Boring" Haskell is neither simple, junior, nor boring.
 And so, here's my attempt to bridge that gap.
