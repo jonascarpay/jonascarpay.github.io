@@ -1,7 +1,8 @@
-	<item>
-		<title>$title$</title>
-		<link>jonascarpay.com/$url$</link>
-		<description>
-			$abstract$
-		</description>
-	</item>
+		<item>
+			<title>$title$</title>
+			<link>https://jonascarpay.com/$url$</link>
+			<guid isPermaLink="false">https://jonascarpay.com/$url$</guid>
+			<description>
+				$abstract$
+			</description>
+		</item>
