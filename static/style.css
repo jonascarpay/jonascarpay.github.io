@@ -15,14 +15,22 @@ a:hover   { text-decoration: underline; }
 .header   { font-size: 70%; }
 .date     { font-size: 80%; }
 
-div.sourceCode {
-  background-color:#EEE;
-  padding:4px 10px;
+div.toc {padding: 10px 20px;}
+
+.toc .title {
+  font-weight:bold;
+  font-size: 135%;
+  color: #aaa;
 }
 
 div.taglist {
   font-size:70%;
   color: #aaa;
+}
+
+div.sourceCode {
+  background-color:#EEE;
+  padding:4px 10px;
 }
 
 .footer {
