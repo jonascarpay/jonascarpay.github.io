@@ -9,7 +9,7 @@ tags:
  
 One of my eventual goals with this blog is a post, or series of posts self-importantly titled _Effective Haskell_[^alt].
 It's a response to the recent [Simple](https://www.simplehaskell.org/)/[Boring](https://www.snoyman.com/blog/2019/11/boring-haskell-manifesto)/[Junior](https://www.parsonsmatt.org/2019/12/26/write_junior_code.html) Haskell movement.
-I agree with the sentiment that Haskell is full of footguns, if you write production software rather than papers.
+It's true that when writing Haskell in production, you need to be cautious not to accrue accidental complexity.
 My issue with the argument is the implication that we're giving something up.
 Instead, I'd argue that using "advanced" features like GADTs, Type Families and even type classes is often unnecessary in the first place[^code], and a failure to find a simpler solution.
 
@@ -44,7 +44,7 @@ From this Haskell record, we then need to:
 
 1. Reject types that the GPU does not support
 2. Match up these arguments to the shader code
-3. Make sure the types of the variables match between our code and the GGPU
+3. Make sure the types of the variables match between our code and the GPU
 4. Check for missing/unbound/duplicate variables
 5. Get the locations of those variables on the GPU
 6. Assign initial values
