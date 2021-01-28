@@ -1,5 +1,5 @@
 ---
-title: The working programmer's guide to setting up a Haskell project
+title: The working programmer's guide to setting up Haskell projects
 date: 2021-01-28
 tags: haskell nix project cabal hls
 abstract: How to set up a Haskell project using Haskell.nix
