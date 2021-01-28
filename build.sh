@@ -18,7 +18,9 @@ for post in $POSTS; do
     --include-before-body=static/back.html \
     --include-after-body=static/back.html \
     --include-after-body=static/footer.html \
-    --include-in-header=static/meta.html
+    --include-in-header=static/meta.html \
+    --template=static/template.html5
+
   pandoc "$post" -t html --template=static/toc_entry -V url="$URL" >>"$TMP/toc.html"
 
   pandoc "$post" -t plain --template=static/rss_entry -V url="$URL" >>"$TMP/rss_body"
