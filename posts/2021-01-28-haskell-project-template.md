@@ -9,11 +9,6 @@ abstract: How to set up a Haskell project using Haskell.nix
 Nothing beats Haskell.nix for features and flexibility.
 To get started quickly, use the [template-haskell](https://github.com/jonascarpay/template-haskell) project template.
 
-- Clone it to a directory with a name of your choice and `cd` into it
-- Run `./wizard.sh`
-- Enter the shell
-- Start coding
-
 ---
 
 If you've ever tried to set up a Haskell project, you know that it can be extremely frustrating to get to a point where everything just werks[^1].
@@ -90,8 +85,7 @@ _Technically_ this is optional, but if you don't you will build GHC from scratch
 ### Project setup
 Unlike, say, Stack, Haskell.nix is just a Nix library, it doesn't have any fancy CLI tools that create a project for you.
 For that reason, you probably want to use a project template that you copy whenever you start a new project.
-
-You can make one, described below, if you want that learning experience, but you can also just use [template-haskell](https://github.com/jonascarpay/template-haskell).
+The Haskell.nix parts are going to be the exact same between your projects, so this should be very easy.
 
 #### Using [template-haskell](https://github.com/jonascarpay/template-haskell)
 
