@@ -146,7 +146,7 @@ Everything here is as normal, except for the fact that Cabal doesn't have to wor
 Haskell.nix also provides pure Nix derivations for your project.
 This means that instead of polluting your project directory with build artifacts, they end up in the Nix store, where they get garbage collected automatically.
 
-There are two downsides, however:
+Unfortunately, there are two things that make this pretty slow:
 
 - Nix cannot do incremental builds within a single package
 - The Nix evaluation can add a few seconds of overhead.
