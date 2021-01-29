@@ -160,6 +160,7 @@ $ nix-build pkgs.nix -A hsPkgs.<my-project>.components.<component>
 ```
 
 Where `<component>` is one of:
+
 - `lib`
 - `exes.<executable>`
 - `tests.<testsuite>`
