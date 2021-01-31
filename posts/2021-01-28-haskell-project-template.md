@@ -113,7 +113,7 @@ The Haskell.nix manual has clear instructions for both parts, see [Scaffolding](
 Getting the tools we want is a matter of adding them to the `tools` section in the `shellFor`.
 You don't actually have to specify their versions, you can put `"latest"`.
 
-For reference, here are my [`pkgs.nix`](https://github.com/jonascarpay/template-haskell/blob/master/pkgs.nix)(called `default.nix` in the manual) and [`shell.nix`](https://github.com/jonascarpay/template-haskell/blob/master/shell.nix).
+For reference, here are my [`pkgs.nix`](https://github.com/jonascarpay/template-haskell/blob/master/pkgs.nix) (what's called `default.nix` in the manual) and [`shell.nix`](https://github.com/jonascarpay/template-haskell/blob/master/shell.nix).
 
 Once you've set up your project and shell, you can pretty much share these two files between all your projects.
 
