@@ -110,12 +110,14 @@ It doesn't really matter how you do this (you probably already have a preferred 
 Once done, you need to set up `Haskell.nix`.
 This is typically done by adding two Nix files; one that describes the project, and one that describes your development shell.
 The Haskell.nix manual has clear instructions for both parts, see [Scaffolding](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#scaffolding) and [How to get a development shell](https://input-output-hk.github.io/haskell.nix/tutorials/development/#how-to-get-a-development-shell).
-
-Once you've set up your project and shell, you can pretty much share these two files between all your projects.
+Getting the tools we want is a matter of adding them to the `tools` section in the `shellFor`.
+You don't actually have to specify their versions, you can put `"latest"`.
 
 For reference, here are my [`pkgs.nix`](https://github.com/jonascarpay/template-haskell/blob/master/pkgs.nix)(called `default.nix` in the manual) and [`shell.nix`](https://github.com/jonascarpay/template-haskell/blob/master/shell.nix).
 
-To turn your project into an actual template, you can get as fancy as you want.
+Once you've set up your project and shell, you can pretty much share these two files between all your projects.
+
+To turn your project into an actual template, you can make things as simple or fancy as you want.
 As mentioned above, in `template-haskell`, I just use a simple shell script, but if you want you could also use [cookiecutter](https://github.com/cookiecutter/cookiecutter).
 
 ## Adding files
