@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+  <meta name="dcterms.date" content="2020-05-26" />
+  <title>Monoidal Puzzle Solving</title>
+  <meta property="og:title" content="Monoidal Puzzle Solving" />
+  <meta property="twitter:title" content="Monoidal Puzzle Solving" />
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+</head>
+<body>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Monoidal Puzzle Solving</h1>
+<p class="date">2020-05-26</p>
+</header>
+<p>Judging by the recent surge in popularity of the excellent <a href="https://www.youtube.com/channel/UCC-UOdK8-mIjxBQm_ot1T-Q">Cracking the Cryptic YouTube channel</a>, I’m not the only person for who recent circumstances have led them to rediscover logic puzzles. There is an entire art to hand-crafting these Puzzles that I never appreciated, complete with world-famous “setters”, and it makes for a perfect nerdy rabbit hole for people suddenly spending a lot of time inside. There are classic puzzles, like the Sudoku, but things become especially interesting when you start playing with the rule set. For example, you might have seen the viral <a href="https://www.youtube.com/watch?v=yKf9aUIxdb4">“Miracle Sudoku”</a> that has only 2 given digits (on which more later).</p>
+<p>The same goes for writing solvers: writing a Sudoku solver is trivial, but can we make one in which we can easily play with the rules? Designing an interesting puzzle becomes a lot easier if you can freely experiment with rules while making sure that you still have a unique solution.</p>
+<p>It turns out you can, and it’s a great exercise in higher-order functions and composition. So, in this post, we’re going to write a solver.</p>
+<h1 id="the-solver">The Solver</h1>
+<p>A <code>Rule</code> tells us whether, given a <em>partial</em> solution to a puzzle, we can put an answer <code>a</code> in some cell <code>i</code> (for <em>index</em>). Once we manage to assign an answer to <em>every</em> cell in the puzzle, we have a (hopefully unique) solution.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Solution</span> i a <span class="ot">=</span> i <span class="ot">-&gt;</span> a</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Rule</span> i a <span class="ot">=</span> <span class="dt">Solution</span> i (<span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> i <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">All</span></span></code></pre></div>
+<p><code>All</code> is a monoid over <code>Bool</code> where <code>(&lt;&gt;) == (&amp;&amp;)</code> and using it here also makes <code>Rule i a</code> a monoid. It gives us a way to compose rules for free, with <code>rule1 &lt;&gt; rule2</code> meaning that both <code>rule1</code> and <code>rule2</code> must hold, and <code>mempty</code> being a rule that always passes.</p>
+<p>For the initial given digits/answers, we’ll keep it simple and just use a list of pairs.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Givens</span> i a <span class="ot">=</span> [(i, a)]</span></code></pre></div>
+<p>We also need a way to list all inhabitants of our <code>i</code> and <code>a</code> types. There are <a href="https://hackage.haskell.org/package/universe">libraries</a> that do this for you, but I like to avoid the dependency and just leverage the <code>Ix</code><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> type class from <code>base</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Universe</span> a <span class="ot">=</span> (<span class="dt">Bounded</span> a, <span class="dt">Ix</span> a)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ot">universe ::</span> <span class="dt">Universe</span> a <span class="ot">=&gt;</span> [a]</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>universe <span class="ot">=</span> <span class="fu">range</span> (<span class="fu">minBound</span>, <span class="fu">maxBound</span>)</span></code></pre></div>
+<p>With the types taken care of, the solver practically writes itself. For each cell, we try to assign an answer that satisfies the rule, and the list monad takes care of backtracking if there are no more valid answers:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">solve ::</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">forall</span> i a<span class="op">.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  (<span class="dt">Universe</span> i, <span class="dt">Universe</span> a) <span class="ot">=&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Rule</span> i a <span class="ot">-&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Givens</span> i a <span class="ot">-&gt;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  [<span class="dt">Solution</span> i a]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>solve rule given <span class="ot">=</span> go (<span class="fu">filter</span> (<span class="ot">`Map.notMember`</span> m0) universe) m0</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="ot">    m0 ::</span> <span class="dt">Map</span> i a</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    m0 <span class="ot">=</span> Map.fromList given</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="ot">    go ::</span> [i] <span class="ot">-&gt;</span> <span class="dt">Map</span> i a <span class="ot">-&gt;</span> [<span class="dt">Solution</span> i a]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    go [] m <span class="ot">=</span> <span class="fu">pure</span> (m <span class="op">Map.!</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    go (i <span class="op">:</span> is) m <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>      a <span class="ot">&lt;-</span> universe</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      guard <span class="op">.</span> getAll <span class="op">$</span> rule (m <span class="op">Map.!?</span>) i a</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>      go is (M.insert i a m)</span></code></pre></div>
+<h3 id="n-queens"><span class="math inline"><em>n</em></span> Queens</h3>
+<p>As an initial exercise/proof-of-concept, we’ll try the classic <span class="math inline"><em>n</em></span> queens puzzle. The object is to place <span class="math inline"><em>n</em></span> queens on an <span class="math inline"><em>n</em> × <em>n</em></span> chess board, such that none is under attack by another. Our domain <code>i</code> consists of the indices of the columns of the board, and our range <code>a</code> is the row at which there is a queen in that column. Both of these are integers in the range <span class="math inline">0…<em>n</em> − 1</span>. We’ll use the <a href="https://hackage.haskell.org/package/finite-typelits"><code>finite-typelits</code></a> package to represent bounded finite integers<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<p>We then write a rule that expresses that to place a queen in <span class="math inline">(<em>x</em>, <em>y</em>)</span>, none of the other columns can have a queen in row <span class="math inline"><em>y</em></span> or any of the diagonals of <span class="math inline">(<em>x</em>, <em>y</em>)</span>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">nqueens ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n) (<span class="dt">Finite</span> n)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>nqueens f x y <span class="ot">=</span> <span class="dt">All</span> <span class="op">.</span> <span class="fu">and</span> <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  qx <span class="ot">&lt;-</span> universe</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  qy <span class="ot">&lt;-</span> toList (f qx)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  [qy <span class="op">/=</span> y, difference qx x <span class="op">/=</span> difference qy y]</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ot">difference ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Finite</span> n <span class="ot">-&gt;</span> <span class="dt">Finite</span> n <span class="ot">-&gt;</span> <span class="dt">Finite</span> n</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>difference a b <span class="ot">=</span> <span class="fu">max</span> a b <span class="op">-</span> <span class="fu">min</span> a b</span></code></pre></div>
+<p>If we now ask GHCi how many ways there are to place the <span class="math inline"><em>n</em></span> queens on the board, we get the <a href="https://en.wikipedia.org/wiki/Eight_queens_puzzle#Counting_solutions">expected</a> answers<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>:</p>
+<pre><code>λ&gt; length $ solve (nqueens @8) [] 
+92
+λ&gt; length $ solve (nqueens @4) []
+2
+λ&gt; length $ solve (nqueens @12) []     
+14200</code></pre>
+<p>Now that we know the solver works, we can turn our attention towards Sudoku solving.</p>
+<h1 id="sudoku">Sudoku</h1>
+<p>One thing that will come up <em>a lot</em> in these puzzles is the concept of a cell “seeing” other cells. For example, in normal Sudoku rules a cell “sees” all cells in its row, column, and <span class="math inline">3 × 3</span> box. We express this as a function, from a cell to a set of all the cells it sees:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Sees</span> i <span class="ot">=</span> i <span class="ot">-&gt;</span> <span class="dt">Set</span> i</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ot">row ::</span> (<span class="dt">Universe</span> x, <span class="dt">Ord</span> y) <span class="ot">=&gt;</span> <span class="dt">Sees</span> (x, y)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>row (_, y) <span class="ot">=</span> Set.fromList <span class="op">$</span> (,y) <span class="op">&lt;$&gt;</span> universe</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="ot">column ::</span> (<span class="dt">Universe</span> y, <span class="dt">Ord</span> x) <span class="ot">=&gt;</span> <span class="dt">Sees</span> (x, y)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>column (x, _) <span class="ot">=</span> Set.fromList <span class="op">$</span> (x,) <span class="op">&lt;$&gt;</span> universe</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">F9</span> <span class="ot">=</span> <span class="dt">Finite</span> <span class="dv">9</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="ot">box ::</span> <span class="dt">Sees</span> (<span class="dt">F9</span>, <span class="dt">F9</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>box <span class="ot">=</span> Set.fromList <span class="op">.</span> bitraverse (<span class="fu">group</span> <span class="dv">3</span>) (<span class="fu">group</span> <span class="dv">3</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group</span> n d <span class="ot">=</span> <span class="kw">let</span> b <span class="ot">=</span> <span class="fu">div</span> d n <span class="op">*</span> n <span class="kw">in</span> [b <span class="op">..</span> b <span class="op">+</span> (n <span class="op">-</span><span class="dv">1</span>)]</span></code></pre></div>
+<p>Since <code>Set</code> is a monoid, <code>Sees</code> is also monoid, and it composes beautifully:</p>
+<pre><code>λ&gt; (column &lt;&gt; row &lt;&gt; box) (3,2)
+fromList [(0,2),(1,2),(2,2),(3,0),(3,1),(3,2),(3,3),(3,4),(3,5),(3,6),(3,7),(3,8),(4,0),(4,1),(4,2),(5,0),(5,1),(5,2),(6,2),(7,2),(8,2)]</code></pre>
+<p>The single rule of Sudoku is that a cell must be unique among the cells that it sees. We will call this concept, of a property that holds between a cell and those it sees, a <em>relation</em>, and together with <code>Sees</code> we can turn them into <em>rules</em>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Relation</span> a <span class="ot">=</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">All</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ot">unique ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> <span class="dt">Relation</span> a</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>unique <span class="ot">=</span> (<span class="dt">All</span> <span class="op">.</span>) <span class="op">.</span> <span class="fu">notElem</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="ot">withSeen ::</span> <span class="kw">forall</span> i a<span class="op">.</span> <span class="dt">Sees</span> i <span class="ot">-&gt;</span> <span class="dt">Relation</span> a <span class="ot">-&gt;</span> <span class="dt">Rule</span> i a</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>withSeen sees rel <span class="ot">=</span> go</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="ot">    go ::</span> <span class="dt">Solution</span> i (<span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> i <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">All</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    go f i a <span class="ot">=</span> rel a <span class="op">$</span> Set.toList (sees i) <span class="op">&gt;&gt;=</span> toList <span class="op">.</span> f</span></code></pre></div>
+<p>We now have two equivalent ways of expressing the rules of Sudoku:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">sudokuRules ::</span> <span class="dt">Rule</span> (<span class="dt">F9</span>, <span class="dt">F9</span>) <span class="dt">F9</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sudokuRules <span class="ot">=</span> withSeen row unique <span class="op">&lt;&gt;</span> withSeen column unique <span class="op">&lt;&gt;</span> withSeen box unique</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>sudokuRules <span class="ot">=</span> withSeen (row <span class="op">&lt;&gt;</span> column <span class="op">&lt;&gt;</span> box) unique</span></code></pre></div>
+<p>The only thing that’s left is to find a Sudoku to solve. From now on, I’ll start using some functions whose implementations are neither interesting nor particularly relevant. If you see a naked type signature its implementation can be found in the appendix.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">printSolution ::</span> (<span class="dt">Solution</span> i a <span class="ot">-&gt;</span> <span class="dt">String</span>) <span class="ot">-&gt;</span> [<span class="dt">Solution</span> i a] <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ot">showGrid ::</span> (<span class="dt">Universe</span> x, <span class="dt">Universe</span> y) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Char</span>) <span class="ot">-&gt;</span> <span class="dt">Solution</span> (x, y) a <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="ot">showF9 ::</span> <span class="dt">F9</span> <span class="ot">-&gt;</span> <span class="dt">Char</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="ot">parseSudoku ::</span> [<span class="dt">String</span>] <span class="ot">-&gt;</span> <span class="dt">Givens</span> (<span class="dt">F9</span>, <span class="dt">F9</span>) <span class="dt">F9</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="ot">normalSudoku ::</span> <span class="dt">Givens</span> (<span class="dt">F9</span>, <span class="dt">F9</span>) <span class="dt">F9</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>normalSudoku <span class="ot">=</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  parseSudoku</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    [ <span class="st">&quot;5 3 .  . 7 .  . . .&quot;</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;6 . .  1 9 5  . . .&quot;</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. 9 8  . . .  . 6 .&quot;</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;8 . .  . 6 .  . . 3&quot;</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;4 . .  8 . 3  . . 1&quot;</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;7 . .  . 2 .  . . .&quot;</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. 6 .  . . .  2 8 .&quot;</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  4 1 9  . . 5&quot;</span>,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . 8 .  . 7 .&quot;</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    ]</span></code></pre></div>
+<p>And sure enough:</p>
+<pre><code>λ&gt; printSolution (showGrid showF9) (solve sudokuRules normalSudoku)
+5 3 4 6 7 8 9 1 2
+6 7 2 1 9 5 3 4 8
+1 9 8 3 4 2 5 6 7
+8 5 9 7 6 1 4 2 3
+4 2 6 8 5 3 7 9 1
+7 1 3 9 2 4 8 5 6
+9 6 1 5 3 7 2 8 4
+2 8 7 4 1 9 6 3 5
+3 4 5 2 8 6 1 7 9</code></pre>
+<h3 id="anti-knight-sudoku">Anti-Knight Sudoku</h3>
+<p>It looks like our solver works, so let’s write some Sudoku variations. For example, one popular variation is anti-knight Sudoku, in which, in addition to the normal Sudoku rules, a cell cannot contain the same digit as any cell a chess knight’s move away:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">fromOffsets ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> [(<span class="dt">Integer</span>, <span class="dt">Integer</span>)] <span class="ot">-&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>fromOffsets offsets (x, y) <span class="ot">=</span> Set.fromList <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  (dx, dy) <span class="ot">&lt;-</span> offsets</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  (,) <span class="op">&lt;$&gt;</span> asInt (<span class="op">+</span> dx) x <span class="op">&lt;*&gt;</span> asInt (<span class="op">+</span> dy) y</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    asInt f <span class="ot">=</span> <span class="fu">maybe</span> [] <span class="fu">pure</span> <span class="op">.</span> packFinite <span class="op">.</span> f <span class="op">.</span> getFinite</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="ot">knight ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>knight <span class="ot">=</span> fromOffsets <span class="op">$</span> [(<span class="dv">2</span>, <span class="dv">1</span>), (<span class="dv">1</span>, <span class="dv">2</span>)] <span class="op">&gt;&gt;=</span> bitraverse f f</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    f x <span class="ot">=</span> [x, <span class="op">-</span>x]</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="ot">antiknightSudoku ::</span> <span class="dt">Givens</span> (<span class="dt">F9</span>, <span class="dt">F9</span>) <span class="dt">F9</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>antiknightSudoku <span class="ot">=</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  parseSudoku</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    [ <span class="st">&quot;. 3 .  . 4 1  . . 7&quot;</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  5 3 .  . 4 .&quot;</span>,</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;4 . .  8 . 9  . 3 .&quot;</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;6 . 3  . . .  . 7 .&quot;</span>,</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  6 . 3  . . 4&quot;</span>,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. 4 .  . . .  . . .&quot;</span>,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;3 . .  . . .  . . .&quot;</span>,</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . 6 .  . 5 .&quot;</span>,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. 6 4  3 . .  . . .&quot;</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>antiknightRules <span class="ot">=</span> sudokuRules <span class="op">&lt;&gt;</span> withSeen knight unique</span></code></pre></div>
+<p>If we attempt to solve this with regular Sudoku rules it’s ambiguous, but as expected, adding the anti-knight rule gives us the following unique solution:</p>
+<pre><code>λ&gt; printSolution (showGrid showF9) (solve antiknightRules antiknightSudoku)
+5 3 6 2 4 1 8 9 7
+9 7 8 5 3 6 2 4 1
+4 2 1 8 7 9 6 3 5
+6 1 3 4 8 5 9 7 2
+7 8 9 6 2 3 5 1 4
+2 4 5 9 1 7 3 6 8
+3 5 7 1 9 8 4 2 6
+8 9 2 7 6 4 1 5 3
+1 6 4 3 5 2 7 8 9</code></pre>
+<h3 id="miracle-sudoku">Miracle Sudoku</h3>
+<p>We’re ready for the “Miracle” Sudoku we talked about in the introduction. The Miracle Sudoku has extremely few givens, but makes up for it in rules. The rules are</p>
+<ul>
+<li>Normal Sudoku</li>
+<li>Antiknight</li>
+<li>Anti<em>king</em></li>
+<li>No two consecutive digits can be orthogonally adjacent</li>
+</ul>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>miracleSudoku <span class="ot">=</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  parseSudoku</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    [ <span class="st">&quot;. . .  . . .  . . .&quot;</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  . . .&quot;</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  . . .&quot;</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  . . .&quot;</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . 1  . . .  . . .&quot;</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  2 . .&quot;</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  . . .&quot;</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  . . .&quot;</span>,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;. . .  . . .  . . .&quot;</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>miracleRules <span class="ot">=</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  sudokuRules</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&gt;</span> withSeen (knight <span class="op">&lt;&gt;</span> king) unique</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&gt;</span> withSeen adjacent noConsecutive</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="ot">king ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>king <span class="ot">=</span> fromOffsets <span class="op">$</span> (,) <span class="op">&lt;$&gt;</span> [<span class="op">-</span><span class="dv">1</span> <span class="op">..</span> <span class="dv">1</span>] <span class="op">&lt;*&gt;</span> [<span class="op">-</span><span class="dv">1</span> <span class="op">..</span> <span class="dv">1</span>]</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="ot">adjacent ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>adjacent <span class="ot">=</span> fromOffsets [(<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>), (<span class="dv">0</span>, <span class="dv">1</span>), (<span class="dv">1</span>, <span class="dv">0</span>), (<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>)]</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="ot">noConsecutive ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Relation</span> (<span class="dt">Finite</span> n)</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>noConsecutive n <span class="ot">=</span> <span class="dt">All</span> <span class="op">.</span> <span class="fu">all</span> ((<span class="op">/=</span> <span class="dv">1</span>) <span class="op">.</span> difference n)</span></code></pre></div>
+<p>As for actually solving it, I highly recommend <a href="https://cracking-the-cryptic.web.app/sudoku/tjN9LtrrTL">trying it for yourself</a>, especially since if you don’t compile GHCi will take a while.</p>
+<p>That concludes the Sudokus, let’s try a few other puzzles.</p>
+<h1 id="a-few-other-puzzles">A Few Other Puzzles</h1>
+<h3 id="n-queens-bishops-and-rooks"><span class="math inline"><em>n</em></span> Queens, Bishops, and Rooks</h3>
+<p>Now that we’re more familiar with how to write and compose rules, let’s look back and have some fun with the <span class="math inline"><em>n</em></span> queens problem. We’re going to express it differently this time, instead of mapping every column to a row with a queen, we’ll express it as mapping every cell on the board to whether or not there is a queen there, similar to how we mapped each cell of a Sudoku to a digit. This allows us some more flexibility, like decomposing <span class="math inline"><em>n</em></span> queens into <span class="math inline"><em>n</em></span> bishops and <span class="math inline"><em>n</em></span> rooks:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Square</span> <span class="ot">=</span> <span class="dt">Piece</span> <span class="op">|</span> <span class="dt">Empty</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>, <span class="dt">Bounded</span>, <span class="dt">Ix</span>, <span class="dt">Ord</span>, <span class="dt">Enum</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ot">nonattacking ::</span> <span class="dt">Relation</span> <span class="dt">Square</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>nonattacking <span class="dt">Empty</span> _ <span class="ot">=</span> <span class="dt">All</span> <span class="dt">True</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>nonattacking <span class="dt">Piece</span> xs <span class="ot">=</span> <span class="dt">All</span> (<span class="fu">notElem</span> <span class="dt">Piece</span> xs)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="ot">diagonals ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>diagonals (x, y) <span class="ot">=</span> Set.fromList <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> universe</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  dx <span class="ot">&lt;-</span> [x <span class="op">-</span> d, x <span class="op">+</span> d]</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> dy <span class="ot">=</span> y <span class="op">-</span> d</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  guard <span class="op">$</span> difference x dx <span class="op">==</span> difference y dy</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> (dx, dy)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="ot">nrooks ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="dt">Square</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>nrooks <span class="ot">=</span> withSeen (row <span class="op">&lt;&gt;</span> column) nonattacking</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="ot">nbishops ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="dt">Square</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>nbishops <span class="ot">=</span> withSeen diagonals nonattacking</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="ot">nqueens ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="dt">Square</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>nqueens <span class="ot">=</span> nrooks <span class="op">&lt;&gt;</span> nbishops</span></code></pre></div>
+<pre><code>λ&gt; printSolution (showGrid showSquare) (solve (nrooks @8) [])
+Ambiguous, first solution:
+X . . . . . . .
+. X . . . . . .
+. . X . . . . .
+. . . X . . . .
+. . . . X . . .
+. . . . . X . .
+. . . . . . X .
+. . . . . . . X
+λ&gt; printSolution (showGrid showSquare) (solve (nbishops @8) [])
+Ambiguous, first solution:
+X . . . . . . .
+X . . . . . . .
+X . . . . . . .
+X . . . . X . X
+X . . . . X . X
+X . . . . . . .
+X . . . . . . .
+X . . . . . . .</code></pre>
+<p>If you look at the solution to <code>nbishops</code>, you might spot an issue. The object of the original <span class="math inline"><em>n</em></span> queens game is to place exactly <span class="math inline"><em>n</em></span> queens, but our backtracker’s goal is to just assign <code>Empty</code> or <code>Piece</code> to every square. In the case of <code>nbishops</code> you could place as many as 14 bishops, but we’re not guiding the solver towards that point. It becomes especially clear if we try <code>nqueens</code>:</p>
+<pre><code>λ&gt; printSolution (showGrid showSquare) (solve (nqueens @8) [])
+Ambiguous, first solution:
+X . . . . . . .
+. . . X . . . .
+. X . . . . . .
+. . . . X . . .
+. . X . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .</code></pre>
+<p>That won’t do at all. We <em>could</em> filter every solution at the <em>end</em> based on whether or not it has a queen in every column, but that’s more brute forcing than backtracking. Instead we’ll define a new combinator, called <code>constraint</code>. It will place a constraint on a region by, when every cell in a region has been assigned a value, checking whether some condition holds for those values.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ot">constraint ::</span> <span class="dt">Eq</span> i <span class="ot">=&gt;</span> <span class="dt">Sees</span> i <span class="ot">-&gt;</span> ([a] <span class="ot">-&gt;</span> <span class="dt">All</span>) <span class="ot">-&gt;</span> <span class="dt">Rule</span> i a</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>constraint sees rel <span class="ot">=</span> go</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    go f i a <span class="ot">=</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>      <span class="kw">let</span> f&#39; i&#39; <span class="ot">=</span> <span class="kw">if</span> i&#39; <span class="op">==</span> i <span class="kw">then</span> <span class="dt">Just</span> a <span class="kw">else</span> f i&#39;</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>       <span class="kw">in</span> <span class="fu">maybe</span> (<span class="dt">All</span> <span class="dt">True</span>) rel <span class="op">.</span> <span class="fu">traverse</span> f&#39; <span class="op">.</span> Set.toList <span class="op">.</span> sees <span class="op">$</span> i</span></code></pre></div>
+<p>And with that, we can reformulate <code>nqeens</code>:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ot">contains ::</span> (<span class="dt">Eq</span> i, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span> <span class="dt">Sees</span> i <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Rule</span> i a</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>contains sees a <span class="ot">=</span> constraint sees (<span class="dt">All</span> <span class="op">.</span> <span class="fu">elem</span> a)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="ot">nqueens2 ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="dt">Square</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>nqueens2 <span class="ot">=</span> nrooks <span class="op">&lt;&gt;</span> nbishops <span class="op">&lt;&gt;</span> (column <span class="ot">`contains`</span> <span class="dt">Piece</span>)</span></code></pre></div>
+<pre><code>λ&gt; printSolution (showGrid showSquare) (solve (nqueens2 @8) [])
+Ambiguous, first solution:
+X . . . . . . .
+. . . . . . X .
+. . . . X . . .
+. . . . . . . X
+. X . . . . . .
+. . . X . . . .
+. . . . . X . .
+. . X . . . . .</code></pre>
+<p>And as expected, we get a proper solution again.</p>
+<h3 id="nti-knight-queens"><span class="math inline"><em>n</em></span>ti-knight Queens</h3>
+<p>Let’s take a lesson from the Sudoku variants, and consider a variant of <span class="math inline"><em>n</em></span> queens in which the queens also cannot be within a knight’s move from one another:</p>
+<pre><code>λ&gt; printSolution (showGrid showSquare) (solve (withSeen knight nonattacking &lt;&gt; nqueens2 @8) [])
+No Solutions</code></pre>
+<p>Turns out it doesn’t actually have any solutions for <span class="math inline"><em>n</em> = 8</span>… Instead we need to go to <span class="math inline"><em>n</em> = 10</span> (or 1), but only if we don’t also force a piece at (5,5):</p>
+<pre><code>λ&gt; printSolution (showGrid showSquare) (solve (withSeen knight nonattacking &lt;&gt; nqueens2 @10) [])
+Ambiguous, first solution:
+. . . X . . . . . .
+. . . . . . . X . .
+X . . . . . . . . .
+. . . . X . . . . .
+. . . . . . . . X .
+. X . . . . . . . .
+. . . . . X . . . .
+. . . . . . . . . X
+. . X . . . . . . .
+. . . . . . X . . .
+λ&gt; printSolution (showGrid showSquare) (solve (withSeen knight nonattacking &lt;&gt; nqueens2 @10) [((5, 5), Piece)])
+No solutions</code></pre>
+<h3 id="star-battle">Star Battle</h3>
+<p>And finally, my new favorite kind of puzzle: <a href="https://www.youtube.com/watch?v=w1DSgHiI6GQ">Star Battle</a>. In a Star Battle puzzle, the object is to place two stars in every row, column, and outlined region, such that no two stars touch, even diagonally.</p>
+<p>It may initially seem tricky to express the outlined regions, but it’s simply another <code>Sees</code> relation. Aside from that, we have all the tools we need to express the rules to star battle already.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ot">starbattleRules ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="ot">-&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="dt">Square</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>starbattleRules regions <span class="ot">=</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  withSeen king nonattacking</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&gt;</span> has2 regions</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&gt;</span> has2 column</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&gt;</span> has2 row</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    has2 r <span class="ot">=</span> constraint r (<span class="dt">All</span> <span class="op">.</span> (<span class="op">==</span> <span class="dv">2</span>) <span class="op">.</span> <span class="fu">length</span> <span class="op">.</span> <span class="fu">filter</span> (<span class="op">==</span> <span class="dt">Piece</span>))</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="ot">parseStarbattle ::</span> (<span class="dt">KnownNat</span> n) <span class="ot">=&gt;</span> [<span class="dt">String</span>] <span class="ot">-&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="ot">starbattle ::</span> <span class="dt">Sees</span> (<span class="dt">F10</span>, <span class="dt">F10</span>)</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>starbattle <span class="ot">=</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  parseStarbattle</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    [ <span class="st">&quot;AAAAAABBBB&quot;</span>,</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;ACADABBEEE&quot;</span>,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;ACCDDBEEEE&quot;</span>,</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;ACCDDBEEEF&quot;</span>,</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;ACGDDBEEEF&quot;</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;ACGDHHEEFF&quot;</span>,</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;AGGGHIIEEF&quot;</span>,</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;JGGGHIIEFF&quot;</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;JGGHHJIIFF&quot;</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;JJJJJJIIFF&quot;</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>    ]</span></code></pre></div>
+<pre><code>λ&gt; printSolution (showGrid showSquare) (solve (starbattleRules starbattle) [])
+. . . X . . . . X .
+. X . . . . X . . .
+. . . . X . . . X .
+X . X . . . . . . .
+. . . . . . . X . X
+. . . X . X . . . .
+. X . . . . . . . X
+. . . . X . X . . .
+X . X . . . . . . .
+. . . . . X . X . .</code></pre>
+<p>And that’s how you solve a Star Battle.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>If there is a point to this post, it would be that simple higher-order functions can get you <em>really</em> far. We were able to write a solver for a large family of puzzles, almost entirely without ever writing a data type or type class. I’m leaving the story of why that might be a good thing for another time.</p>
+<p>Thanks for reading, criticism is welcome.</p>
+<p>Thanks to @<a href="https://github.com/cdepillabout/">cdepillabout</a>, @<a href="https://github.com/kayhide/">kayhide</a>, and @<a href="https://github.com/considerate">considerate</a> for proof-reading.</p>
+<h1 id="appendix-omitted-code">Appendix: Omitted Code</h1>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ot">printSolution ::</span> (<span class="dt">Solution</span> i a <span class="ot">-&gt;</span> <span class="dt">String</span>) <span class="ot">-&gt;</span> [<span class="dt">Solution</span> i a] <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>printSolution pp sols <span class="ot">=</span> <span class="fu">putStrLn</span> <span class="op">$</span> <span class="kw">case</span> sols <span class="kw">of</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  [] <span class="ot">-&gt;</span> <span class="st">&quot;No solutions&quot;</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  [x] <span class="ot">-&gt;</span> pp x</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  (x <span class="op">:</span> _) <span class="ot">-&gt;</span> <span class="st">&quot;Ambiguous, first solution:\n&quot;</span> <span class="op">&lt;&gt;</span> pp x</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="ot">showGrid ::</span> (<span class="dt">Universe</span> x, <span class="dt">Universe</span> y) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Char</span>) <span class="ot">-&gt;</span> <span class="dt">Solution</span> (x, y) a <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>showGrid showA sol <span class="ot">=</span> (<span class="op">$</span> <span class="st">&quot;&quot;</span>) <span class="op">.</span> unlines&#39; <span class="op">$</span> showRow <span class="op">&lt;$&gt;</span> universe</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    showRow y <span class="ot">=</span> <span class="fu">showString</span> <span class="op">.</span> intersperse <span class="ch">&#39; &#39;</span> <span class="op">$</span> showA <span class="op">.</span> sol <span class="op">.</span> (,y) <span class="op">&lt;$&gt;</span> universe</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    unlines&#39; <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">.</span>) <span class="fu">id</span> <span class="op">.</span> intersperse (<span class="fu">showChar</span> <span class="ch">&#39;\n&#39;</span>)</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="ot">showF9 ::</span> <span class="dt">F9</span> <span class="ot">-&gt;</span> <span class="dt">Char</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>showF9 <span class="ot">=</span> <span class="fu">chr</span> <span class="op">.</span> (<span class="op">+</span> <span class="fu">ord</span> <span class="ch">&#39;1&#39;</span>) <span class="op">.</span> <span class="fu">fromIntegral</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="ot">parseSudoku ::</span> [<span class="dt">String</span>] <span class="ot">-&gt;</span> <span class="dt">Givens</span> (<span class="dt">F9</span>, <span class="dt">F9</span>) <span class="dt">F9</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>parseSudoku strs <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  (y, xs) <span class="ot">&lt;-</span> <span class="fu">zip</span> [<span class="dv">0</span> <span class="op">..</span>] strs</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  (x, <span class="dt">Just</span> d) <span class="ot">&lt;-</span> <span class="fu">zip</span> [<span class="dv">0</span> <span class="op">..</span>] (fromChar <span class="op">&lt;$&gt;</span> <span class="fu">filter</span> (<span class="op">/=</span> <span class="ch">&#39; &#39;</span>) xs)</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> ((x, y), d)</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="ot">    fromChar ::</span> <span class="dt">Char</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> <span class="dt">F9</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>    fromChar c</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> c <span class="op">&gt;=</span> <span class="ch">&#39;1&#39;</span> <span class="op">&amp;&amp;</span> c <span class="op">&lt;=</span> <span class="ch">&#39;9&#39;</span> <span class="ot">=</span> <span class="dt">Just</span> <span class="op">.</span> <span class="fu">fromIntegral</span> <span class="op">$</span> <span class="fu">ord</span> c <span class="op">-</span> <span class="fu">ord</span> <span class="ch">&#39;1&#39;</span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a><span class="ot">parseStarbattle ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> [<span class="dt">String</span>] <span class="ot">-&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>parseStarbattle strs <span class="ot">=</span> (groupPos <span class="op">M.!</span>) <span class="op">.</span> (posGroup <span class="op">M.!</span>)</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>    posGroup <span class="ot">=</span> M.fromList assocs</span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>    groupPos <span class="ot">=</span> <span class="fu">foldr</span> (\(p, <span class="fu">group</span>) m <span class="ot">-&gt;</span> M.insertWith (<span class="op">&lt;&gt;</span>) <span class="fu">group</span> (Set.singleton p) m) <span class="fu">mempty</span> assocs</span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>    assocs <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>      (y, line) <span class="ot">&lt;-</span> <span class="fu">zip</span> [<span class="dv">0</span> <span class="op">..</span>] strs</span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>      (x, <span class="fu">group</span>) <span class="ot">&lt;-</span> <span class="fu">zip</span> [<span class="dv">0</span> <span class="op">..</span>] (<span class="fu">filter</span> (<span class="op">/=</span> <span class="ch">&#39; &#39;</span>) line)</span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">pure</span> ((x, y), <span class="fu">group</span>)</span></code></pre></div>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>If you’re thinking why we don’t just use <code>Enum</code> instead of <code>Ix</code>, it’s because tuples don’t have <code>Enum</code> instances, and we’re going to be using a lot of tuples.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p><code>Finite</code> doesn’t actually have an <code>Ix</code> instance <a href="https://github.com/mniip/finite-typelits/pull/19">yet</a>, so for now you’ll have to import the <code>Data.Finite.Internal</code> module and add a standalone <code>deriving instance (Ix (Finite n))</code>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>Once you get up to <span class="math inline"><em>n</em> = 12</span> GHCi definitely starts to sputter. Compiling will make things orders of magnitude faster, but not so fast we can solve for large <span class="math inline"><em>n</em></span>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<div class="footer">Made with pandoc and duct tape. <a href="https://jonascarpay.com/rss.xml">RSS</a></div>
+</body>
+</html>

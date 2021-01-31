@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+  <meta name="dcterms.date" content="2020-05-10" />
+  <title>The Descriptor</title>
+  <meta property="og:title" content="The Descriptor" />
+  <meta property="twitter:title" content="The Descriptor" />
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+</head>
+<body>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">The Descriptor</h1>
+<p class="date">2020-05-10</p>
+</header>
+<p>One of my eventual goals with this blog is a post, or series of posts self-importantly titled <em>Effective Haskell</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. It’s a response to the recent <a href="https://www.simplehaskell.org/">Simple</a>/<a href="https://www.snoyman.com/blog/2019/11/boring-haskell-manifesto">Boring</a>/<a href="https://www.parsonsmatt.org/2019/12/26/write_junior_code.html">Junior</a> Haskell movement. It’s true that when writing Haskell in production, you need to be cautious not to accrue accidental complexity. My issue with the argument is the implication that we’re giving something up. Instead, I’d argue that using “advanced” features like GADTs, Type Families and even type classes is often unnecessary in the first place<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, and a failure to find a simpler solution.</p>
+<p>I’m not sure if I’ll ever actually finish a single post in <em>Effective Haskell</em>, but what I’m going to do in the meantime is use this blog to collect examples of what I think would classify as Effective Haskell.</p>
+<p>In this inaugural post, we will be studying a technique (ostensibly) for iterating over record fields and adding metadata to them, without using Template Haskell or Generics. I’m calling it a <em><a href="https://en.wikipedia.org/wiki/Data_descriptor">descriptor</a></em> because that’s what it reminds me of, but if somebody else has named it before, or just knows a more fitting name, please let me know.</p>
+<h2 id="motivating-example">Motivating example</h2>
+<p>Our initial motivating example is from where I initially stumbled into this technique.</p>
+<p>The goal of the library in this example is to give a way to define graphics pipelines in a safe and efficient way. The user of the library formulates the global arguments (<em>uniforms</em> in GL parlance) to a pipeline on the Haskell side as a data type:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Blinn</span> f <span class="ot">=</span> <span class="dt">Blinn</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> viewPos       ::</span> f (<span class="dt">V3</span> <span class="dt">Float</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> lightAmbient  ::</span> f (<span class="dt">V3</span> <span class="dt">Float</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> lightDiffuse  ::</span> f (<span class="dt">V3</span> <span class="dt">Float</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> lightSpecular ::</span> f (<span class="dt">V3</span> <span class="dt">Float</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> shininess     ::</span> f <span class="dt">Float</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> mvpMatrices   ::</span> <span class="dt">MVP</span> f</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>The shaders (GPU code) are written in a different language, and we an only compile them manually at runtime. From this Haskell record, we then need to:</p>
+<ol type="1">
+<li>Reject types that the GPU does not support</li>
+<li>Match up these arguments to the shader code</li>
+<li>Make sure the types of the variables match between our code and the GPU</li>
+<li>Check for missing/unbound/duplicate variables</li>
+<li>Get the locations of those variables on the GPU</li>
+<li>Assign initial values</li>
+<li>Provide a safe way to update the variables at runtime</li>
+</ol>
+<p>All of that is handled by <code>createProgram</code>, which creates our pipeline and only requires that the user pass a <em>descriptor</em> of the <code>Blinn</code> record:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>(program, <span class="fu">log</span>) <span class="ot">&lt;-</span> createProgram <span class="st">&quot;glsl/common.vert&quot;</span> <span class="st">&quot;glsl/blinn.frag&quot;</span> <span class="op">$</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  \f <span class="ot">-&gt;</span> <span class="dt">Blinn</span> <span class="op">&lt;$&gt;</span> f viewPos       <span class="dv">0</span>   <span class="st">&quot;viewPos&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;*&gt;</span> f lightAmbient  <span class="fl">0.2</span> <span class="st">&quot;light.ambient&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;*&gt;</span> f lightDiffuse  <span class="dv">1</span>   <span class="st">&quot;light.diffuse&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;*&gt;</span> f lightSpecular <span class="dv">1</span>   <span class="st">&quot;light.specular&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>              <span class="co">-- (lines omitted)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;*&gt;</span> f shininess     <span class="dv">32</span>  <span class="st">&quot;material.shininess&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;*&gt;</span> descMvp (\f&#39; <span class="ot">-&gt;</span> f (f&#39; <span class="op">.</span> mvpMatrices))</span></code></pre></div>
+<p>The descriptor is the function from the second line downward. This descriptor contains, for every field, the respective field accessor, an initial value, and the name of the variable in the shader code. If <code>createProgram</code> succeeds it returns a <code>Program Blinn</code> value, and now the field accessors of the original struct can e.g. be used as type-safe update functions:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>withProgram program <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  objViewPos    <span class="op">$=</span> x</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  (model <span class="op">.</span> mvp) <span class="op">$=</span> modelMat</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  (view <span class="op">.</span> mvp)  <span class="op">$=</span> viewMat</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  drawMesh mesh</span></code></pre></div>
+<p>The point is this; a descriptor is an ordinary value, that you can have users provide about their data type. You can then use this value to do complicated things, in a type-safe manner, without the library ever having seen the original type, and without the user having to be aware of the machinery.</p>
+<p>What the descriptor ultimately looks like will depend on the application<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, but the principles stay the same. You might already be able to discern a lot by looking it how they’re used above, but let’s see how they work.</p>
+<h2 id="simple-descriptors">Simple Descriptors</h2>
+<p>Let’s say we’re writing a library that provides a way to ask for data on the command line. We expose a function that, given a label, parsing function, and verification function, asks for and yields a single value:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">ask ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ask label parse check <span class="ot">=</span> go <span class="kw">where</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  go <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">putStrLn</span> <span class="op">$</span> <span class="st">&quot;What&#39;s your &quot;</span> <span class="op">&lt;&gt;</span> label <span class="op">&lt;&gt;</span> <span class="st">&quot;?&quot;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    parse <span class="op">&lt;$&gt;</span> <span class="fu">getLine</span> <span class="op">&gt;&gt;=</span> \<span class="kw">case</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">Just</span> r <span class="op">|</span> check r <span class="ot">-&gt;</span> <span class="fu">return</span> r</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      _ <span class="ot">-&gt;</span> <span class="fu">putStrLn</span> <span class="st">&quot;Invalid response&quot;</span> <span class="op">&gt;&gt;</span> go</span></code></pre></div>
+<p>And the user then uses <code>Applicative</code> to assemble into a function asking for an entire record:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Person</span> <span class="ot">=</span> <span class="dt">Person</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> pName ::</span> <span class="dt">String</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> pAge  ::</span> <span class="dt">Int</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ot">askPerson ::</span> <span class="dt">IO</span> <span class="dt">Person</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>askPerson <span class="ot">=</span> <span class="dt">Person</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;$&gt;</span> ask <span class="st">&quot;name&quot;</span> <span class="dt">Just</span>      ((<span class="op">&gt;</span><span class="dv">1</span>) <span class="op">.</span> <span class="fu">length</span> <span class="op">.</span> <span class="fu">words</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> ask <span class="st">&quot;age&quot;</span>  readMaybe (\a <span class="ot">-&gt;</span> a <span class="op">&gt;=</span> <span class="dv">18</span> <span class="op">&amp;&amp;</span> a <span class="op">&lt;=</span> <span class="dv">99</span>)</span></code></pre></div>
+<p>This is the basis for our descriptor. The arguments to <code>ask</code> in <code>askPerson</code> describe general properties of the fields of <code>Person</code> that might be useful in other contexts. We turn <code>askPerson</code> into a descriptor as follows:</p>
+<ol type="1">
+<li>we factor out the <code>ask</code> so it takes a general <code>field</code> function as an argument</li>
+<li>we add one extra argument to <code>field</code>, the respective record field accessor</li>
+<li>we generalize the <code>IO</code> into any <code>Applicative</code></li>
+</ol>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">descPerson ::</span> <span class="dt">Descriptor</span> <span class="dt">Person</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>descPerson field <span class="ot">=</span> <span class="dt">Person</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;$&gt;</span> field pName <span class="st">&quot;name&quot;</span> <span class="dt">Just</span>      ((<span class="op">&gt;</span><span class="dv">1</span>) <span class="op">.</span> <span class="fu">length</span> <span class="op">.</span> <span class="fu">words</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> field pAge  <span class="st">&quot;age&quot;</span>  readMaybe (\a <span class="ot">-&gt;</span> a <span class="op">&gt;=</span> <span class="dv">18</span> <span class="op">&amp;&amp;</span> a <span class="op">&lt;=</span> <span class="dv">99</span>)</span></code></pre></div>
+<p>The here <code>Descriptor</code> is a type synonym that forces us to be polymorphic:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Descriptor</span> s <span class="ot">=</span> <span class="kw">forall</span> m<span class="op">.</span> <span class="dt">Applicative</span> m</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> (<span class="kw">forall</span> a<span class="op">.</span> (s <span class="ot">-&gt;</span> a)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> m a</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> m s</span></code></pre></div>
+<p>And that’s it. As a first exercies, we can use <code>Descriptor</code> to construct something equivalent to the <code>askPerson</code> we defined above:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ot">askDesc ::</span> <span class="dt">Descriptor</span> p <span class="ot">-&gt;</span> <span class="dt">IO</span> p</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>askDesc desc <span class="ot">=</span> desc (<span class="fu">const</span> ask)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ot">askPerson ::</span> <span class="dt">IO</span> <span class="dt">Person</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>askPerson <span class="ot">=</span> askDesc descPerson</span></code></pre></div>
+<p>But what have we <em>gained</em>? We could swap out <code>ask</code> for a similar function, of course. But there is a point to passing the record field accessor to <code>field</code>; it allows us to work with <em>existing</em> data. For example, we can perform <em>just</em> the validation:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">validate ::</span> <span class="dt">Descriptor</span> p <span class="ot">-&gt;</span> p <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>validate desc pers <span class="ot">=</span> execWriter <span class="op">$</span> desc <span class="op">$</span> \field lbl _ p <span class="ot">-&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> a <span class="ot">=</span> field pers</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>   <span class="kw">in</span> unless (p a) (tell [<span class="st">&quot;Invalid &quot;</span> <span class="op">&lt;&gt;</span> lbl]) <span class="op">$&gt;</span> a</span></code></pre></div>
+<pre><code>λ&gt; validate descPerson (Person &quot;aa&quot; 45)
+[&quot;Invalid name&quot;]</code></pre>
+<p>Or, we can enumerate all the fields in a descriptor:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">fields ::</span> <span class="dt">Descriptor</span> p <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>fields desc <span class="ot">=</span> execWriter <span class="op">$</span> desc <span class="op">$</span> \_ lbl _ _ <span class="ot">-&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  tell [lbl] <span class="op">$&gt;</span> <span class="fu">undefined</span></span></code></pre></div>
+<pre><code>λ&gt; fields descPerson
+[&quot;name&quot;, &quot;age&quot;]</code></pre>
+<p>That’s the gist of a descriptor; a function applied, to each field of a record, with some arguments, polymorphic over any applicative. How you structure the <code>field</code> function depends on what you use the descriptor for, but this outlines the general idea.</p>
+<p>It’s a pretty neat trick, but unfortunately, there are some issues here:</p>
+<ol type="1">
+<li>We can give nonsensical <code>Descriptor</code>s that still type check:</li>
+</ol>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">descNonsense ::</span> <span class="dt">Descriptor</span> <span class="dt">Person</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>descNonsense _ <span class="ot">=</span> <span class="fu">pure</span> <span class="op">$</span> <span class="dt">Person</span> <span class="st">&quot;太郎&quot;</span> <span class="dv">3</span></span></code></pre></div>
+<ol start="2" type="1">
+<li>We need an unfortunate <code>undefined</code> to make the <code>fields</code> definition above type check.</li>
+<li><code>validate</code> is a bit contrived; only outputting a list of invalid fields is hard to deal with safely.</li>
+</ol>
+<p>All of that is solved when we use <em>Higher-Kinded Data (HKD)</em>, which is where this technique really comes into its own.</p>
+<h2 id="descriptors-with-higher-kinded-data">Descriptors with Higher-Kinded Data</h2>
+<p><a href="https://reasonablypolymorphic.com/blog/higher-kinded-data/">Higher-Kinded Data</a> is a pattern where you parameterize record fields over some functor, like this:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">HPerson</span> f <span class="ot">=</span> <span class="dt">HPerson</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> hName ::</span> f <span class="dt">String</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> hAge  ::</span> f <span class="dt">Int</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>With HKD, <code>HPerson Identity</code> is equivalent to the original <code>Person</code> record, but we also get <code>HPerson Maybe</code> that might have missing fields, <code>HPerson (Const a)</code> that has a value of type <code>a</code> for every field, etc.</p>
+<p>We can apply the idea of the descriptor to HKD almost verbatim. Our new <code>descPerson</code> and <code>askDesc</code> look pretty much the same at the term level:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ot">descHPerson ::</span> <span class="dt">HDescriptor</span> <span class="dt">HPerson</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>descHPerson field <span class="ot">=</span> <span class="dt">HPerson</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;$&gt;</span> field hName <span class="st">&quot;name&quot;</span> <span class="dt">Just</span> ((<span class="op">&gt;</span> <span class="dv">1</span>) <span class="op">.</span> <span class="fu">length</span> <span class="op">.</span> <span class="fu">words</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> field hAge <span class="st">&quot;age&quot;</span> readMaybe (\a <span class="ot">-&gt;</span> a <span class="op">&gt;</span> <span class="dv">18</span> <span class="op">&amp;&amp;</span> a <span class="op">&lt;</span> <span class="dv">99</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="ot">askHDesc ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span> <span class="dt">IO</span> (s <span class="dt">Identity</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>askHDesc desc <span class="ot">=</span> desc <span class="op">$</span> \_ lbl parse check <span class="ot">-&gt;</span> <span class="dt">Identity</span> <span class="op">&lt;$&gt;</span> ask lbl parse check</span></code></pre></div>
+<p>In <code>HDescriptor s</code> our <code>s</code> is now also polymorphic over the base functor. This is its type:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">HDescriptor</span> s <span class="ot">=</span> <span class="kw">forall</span> m f<span class="op">.</span> <span class="dt">Applicative</span> m</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> (<span class="kw">forall</span> a<span class="op">.</span> (<span class="kw">forall</span> g<span class="op">.</span> s g <span class="ot">-&gt;</span> g a) <span class="co">-- or, equivalently, Field s a, see below</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>             <span class="ot">-&gt;</span> m (f a)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> m (s f)</span></code></pre></div>
+<p>Let’s revisit the issues with the non-HKD approach.</p>
+<ol type="1">
+<li><code>HDescriptor</code> cannot choose the underlying functor, it <em>has</em> to use <code>field</code> to construct it. We can no longer construct a nonsensical <code>HDescriptor</code> without explicitly using <code>undefined</code>.</li>
+<li>We can write <code>fields</code> using <code>Proxy</code> instead of <code>undefined</code>:</li>
+</ol>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ot">hfields ::</span> <span class="dt">HDescriptor</span> p <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>hfields desc <span class="ot">=</span> execWriter <span class="op">$</span> desc <span class="op">$</span> \_ lbl _ _ <span class="ot">-&gt;</span> tell [lbl] <span class="op">$&gt;</span> <span class="dt">Proxy</span></span></code></pre></div>
+<ol start="3" type="1">
+<li>We can now use our validation function to check an existing record “in-place”, rather than only outputting a list of wrong fields. Compare this type to that of <code>validate</code>:</li>
+</ol>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ot">hvalidate ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span> s <span class="dt">Identity</span> <span class="ot">-&gt;</span> s <span class="dt">Maybe</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>hvalidate desc s <span class="ot">=</span> runIdentity <span class="op">$</span> desc <span class="op">$</span> \f _ _ check <span class="ot">-&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  f s <span class="op">&lt;&amp;&gt;</span> (\a <span class="ot">-&gt;</span> <span class="kw">if</span> check a <span class="kw">then</span> <span class="dt">Just</span> a <span class="kw">else</span> <span class="dt">Nothing</span>)</span></code></pre></div>
+<p>Here’s something that we couldn’t do at all before. Imagine that we get a <code>HPerson (Const String)</code> from, say, a web form. We can then use the <code>HDescriptor</code> to parse and check each field individually.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ot">hParseCheck ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span> s (<span class="dt">Const</span> <span class="dt">String</span>) <span class="ot">-&gt;</span> s <span class="dt">Maybe</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>hParseCheck desc s <span class="ot">=</span> runIdentity <span class="op">$</span> desc <span class="op">$</span> \f _ parse check <span class="ot">-&gt;</span> <span class="fu">pure</span> <span class="op">$</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">case</span> parse <span class="op">$</span> getConst (f s) <span class="kw">of</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Just</span> r <span class="op">|</span> check r <span class="ot">-&gt;</span> <span class="dt">Just</span> r</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    _ <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span></code></pre></div>
+<h3 id="hkd-type-classes">HKD type classes</h3>
+<p>When you use HKD, you typically want to be able to <code>map</code>/<code>traverse</code>/<code>&lt;*&gt;</code> the fields of your record. There are libraries like <a href="https://hackage.haskell.org/package/higgledy"><code>higgledy</code></a>, <a href="https://hackage.haskell.org/package/barbies"><code>barbies</code></a>, <a href="https://hackage.haskell.org/package/barbies-th"><code>barbies-th</code></a>, or <a href="https://hackage.haskell.org/package/hkd"><code>hkd</code></a> that help you derive the required instances (and other nice things). We can show that a descriptor gives you the same power:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dmap ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">forall</span> a<span class="op">.</span> f a <span class="ot">-&gt;</span> g a) <span class="ot">-&gt;</span> s f <span class="ot">-&gt;</span> s g</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>dmap desc fn s <span class="ot">=</span> runIdentity <span class="op">$</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  desc <span class="op">$</span> \f _ _ _ <span class="ot">-&gt;</span> <span class="fu">pure</span> <span class="op">$</span> fn (f s)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="ot">dtraverse ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">forall</span> a<span class="op">.</span> f a <span class="ot">-&gt;</span> m (g a)) <span class="ot">-&gt;</span> s f <span class="ot">-&gt;</span> m (s g)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>dtraverse desc fn s <span class="ot">=</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  desc <span class="op">$</span> \f _ _ _ <span class="ot">-&gt;</span> fn (f s)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="ot">dpure ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">forall</span> a<span class="op">.</span> f a) <span class="ot">-&gt;</span> s f</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>dpure desc a <span class="ot">=</span> runIdentity <span class="op">$</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  desc <span class="op">$</span> \_ _ _ _ <span class="ot">-&gt;</span> <span class="fu">pure</span> a</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="ot">dliftA2 ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> g x <span class="ot">-&gt;</span> h x) <span class="ot">-&gt;</span> s f <span class="ot">-&gt;</span> s g <span class="ot">-&gt;</span> s h</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>dliftA2 desc fn sf sg <span class="ot">=</span> runIdentity <span class="op">$</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  desc <span class="op">$</span> \f _ _ _ <span class="ot">-&gt;</span> <span class="fu">pure</span> <span class="op">$</span> fn (f sf) (f sg)</span></code></pre></div>
+<p>This doesn’t necessarily mean that descriptors compete with the libraries above. The actual use cases are different, descriptors work best when you have to provide an interface to library users and don’t want to force them to use Template Haskell, Generics, or dependencies.</p>
+<h2 id="structs-and-ffi">Structs and FFI</h2>
+<p>Briefly, before we continue: every record field accessor of an HKD has type <code>forall f. s f -&gt; f a</code>. To avoid having to quantify the <code>f</code> every time, we’re going to assign it a type signature:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Field</span> s a <span class="ot">=</span> <span class="kw">forall</span> f<span class="op">.</span> s f <span class="ot">-&gt;</span> f a</span></code></pre></div>
+<p>For example, <code>hName :: Field HPerson String</code> and <code>hAge :: Field HPerson Int</code>.</p>
+<h3 id="updating-a-single-field">Updating a single field</h3>
+<p>One of the issues with normal <code>Storable</code>-based FFI is that, even if you define a <code>Storable</code> instance for a user-defined struct, you cannot perform any field-wise updates on it. With HKD we can, as follows:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">MyStruct</span> f <span class="ot">=</span> <span class="dt">MyStruct</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> versionMajor        ::</span> f <span class="dt">Int</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> versionMinor        ::</span> f <span class="dt">Int</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> frictionCoefficient ::</span> f <span class="dt">Double</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> baconNumber         ::</span> f <span class="dt">Word8</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">SPtr</span> struct <span class="ot">=</span> <span class="dt">SPtr</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> sBase    ::</span> <span class="dt">Ptr</span> ()</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> sOffsets ::</span> struct (<span class="dt">Const</span> <span class="dt">Int</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="ot">setField ::</span> <span class="dt">Storable</span> a <span class="ot">=&gt;</span> <span class="dt">SPtr</span> struct <span class="ot">-&gt;</span> <span class="dt">Field</span> struct a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>setField (<span class="dt">SPtr</span> base offsets) field <span class="ot">=</span> poke ptr</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    ptr <span class="ot">=</span> plusPtr base <span class="op">.</span> getConst <span class="op">.</span> field <span class="op">$</span> offsets</span></code></pre></div>
+<p>As you can see, the trick is to use <code>MyStruct (Const Int)</code> to store the offset of every field. We can then update a single field using</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>setField ptr baconNumber <span class="dv">1</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- Or, if you want to get fancy,</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span><span class="ot"> ($=) ::</span> <span class="dt">Storable</span> a <span class="ot">=&gt;</span> <span class="dt">Field</span> struct a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">ReaderT</span> (<span class="dt">SPtr</span> struct) <span class="dt">IO</span> ()</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    (<span class="op">$=</span>) <span class="ot">=</span> <span class="op">...</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">flip</span> runReaderT ptr <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  versionMajor <span class="op">$=</span> <span class="dv">2</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  versionMinor <span class="op">$=</span> <span class="dv">1</span></span></code></pre></div>
+<p>The field accessors of <code>MyStruct</code> now double as field accessors for our <em>foreign</em> struct. I’m leaving <code>getField</code> as an exercise, but it works the same way.</p>
+<h3 id="constructing-the-sptr">Constructing the <code>SPtr</code></h3>
+<p>Where does the <code>SPtr</code> actually come from? As you might have guessed, we can make one with a descriptor.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ptr <span class="ot">&lt;-</span> newSPtr <span class="op">$</span> \field <span class="ot">-&gt;</span> <span class="dt">MyStruct</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;$&gt;</span> field versionMajor        <span class="dv">1</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> field versionMinor        <span class="dv">9</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> field frictionCoefficient <span class="fl">0.9</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> field baconNumber         <span class="dv">0</span></span></code></pre></div>
+<p>The second argument to <code>field</code> is the initial value of each field.</p>
+<p><code>newSPtr</code> traverses the constructor, creating the record of the offsets for each field. It then <code>malloc</code>s the total size, and assigns each field its initial value:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ot">newSPtr ::</span> <span class="dt">SDescriptor</span> s <span class="ot">-&gt;</span> <span class="dt">IO</span> (<span class="dt">SPtr</span> s)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>newSPtr desc <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> mallocBytes size</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  desc <span class="op">$</span> \f a <span class="ot">-&gt;</span> poke (plusPtr base <span class="op">.</span> getConst <span class="op">.</span> f <span class="op">$</span> offsets) a <span class="op">$&gt;</span> <span class="dt">Proxy</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> (<span class="dt">SPtr</span> base offsets)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    (offsets, size) <span class="ot">=</span> <span class="fu">flip</span> runState <span class="dv">0</span> <span class="op">$</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>      desc <span class="op">$</span> \_ a <span class="ot">-&gt;</span> state (\s <span class="ot">-&gt;</span> (<span class="dt">Const</span> s, s <span class="op">+</span> sizeOf a))</span></code></pre></div>
+<p>What makes <code>SDescriptor</code> different from our previous descriptors is that it has a type class constraint on the <code>field</code> function:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">SDescriptor</span> struct <span class="ot">=</span> <span class="kw">forall</span> m f<span class="op">.</span> <span class="dt">Applicative</span> m</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> ( <span class="kw">forall</span> a<span class="op">.</span> <span class="dt">Storable</span> a</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>              <span class="ot">=&gt;</span> <span class="dt">Field</span> struct a</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> a</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> m (f a)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> m (struct f)</span></code></pre></div>
+<p>This means that, as soon as one of the fields of <code>MyStruct</code> is <em>not</em> <code>Storable</code>, you cannot write a <code>SDescriptor</code> for it. Conversely, the existence of the <code>SDescriptor MyStruct</code> proves that every field of <code>MyStruct</code> is <code>Storable</code>. For example, you could not add a <code>String</code> field to <code>MyStruct</code>, since <code>String</code> aren’t <code>Storable</code>. We’ll look into how you might deal with strings in the section on arrays below.</p>
+<h3 id="nested-structs">Nested structs</h3>
+<p>The initial example already hinted at the fact that structs/descriptors can be nested. The data definition is fairly straightforward, no different from how you would normally do it with HKD:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">MySuperStruct</span> f <span class="ot">=</span> <span class="dt">MySuperStruct</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> someInt ::</span> f <span class="dt">Int</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> nestedData ::</span> <span class="dt">MySubStruct</span> f</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>As for the descriptor itself, you simply call the descriptor for the nested struct in the place it occurs, but you’ll have to prepend the record field accessor as follows:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ot">descMySuperStruct ::</span> <span class="dt">SDescriptor</span> <span class="dt">MySuperStruct</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>descMySuperStruct field <span class="ot">=</span> <span class="dt">MySuperStruct</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;$&gt;</span> field someInt <span class="dv">1</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;*&gt;</span> descMySubStruct (\subField <span class="ot">-&gt;</span> field (subField <span class="op">.</span> nestedData))</span></code></pre></div>
+<h3 id="arrays">Arrays</h3>
+<p>As a final thought, let’s think about how to approach structs that contain arrays. This will be just one of the ways to tackle it, but there are ways to go e.g. statically known sizes.</p>
+<p>The trick here is to give our records <em>two</em><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> functor parameters:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Image</span> fArr fPrim <span class="ot">=</span> <span class="dt">Image</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> imgW    ::</span> fPrim <span class="dt">Int</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> imgH    ::</span> fPrim <span class="dt">Int</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> imgData ::</span> fArr <span class="dt">Word8</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>Correspondingly, our descriptor now takes two function arguments, with the one for arrays taking an extra one indicating the size:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ot">myArrStructDescriptor ::</span> <span class="dt">ArrDescriptor</span> <span class="dt">MyStructWithArrays</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>myArrStructDescriptor array field <span class="ot">=</span> <span class="dt">MyStructWithArrays</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;$&gt;</span> field imgW <span class="dv">99</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> field imgH <span class="dv">99</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;*&gt;</span> array imgData (<span class="dv">99</span> <span class="op">*</span> <span class="dv">99</span> <span class="op">*</span> <span class="dv">3</span>) <span class="dv">0</span></span></code></pre></div>
+<p>I’ll give the type of <code>ArrDescriptor</code> below for completeness’ sake, but even more than before it’s not about the specifics of this approach, but the general idea; you can have multiple <code>field</code>-style functions. In this case the difference is between primitive updates in <code>fPrim</code> and indexed updates in <code>fArr</code>, but you could, for example, also have read/write-only fields.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">ArrDescriptor</span> struct <span class="ot">=</span> <span class="kw">forall</span> m fArr fField<span class="op">.</span> <span class="dt">Applicative</span> m</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> ( <span class="kw">forall</span> a<span class="op">.</span> <span class="dt">Storable</span> a</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>              <span class="ot">=&gt;</span> (<span class="kw">forall</span> gArr gField<span class="op">.</span> struct gArr gField <span class="ot">-&gt;</span> gArr a)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> a</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> m (fArr a)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> ( <span class="kw">forall</span> a<span class="op">.</span> <span class="dt">Storable</span> a</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>              <span class="ot">=&gt;</span> (<span class="kw">forall</span> gArr gField<span class="op">.</span> struct gArr gField <span class="ot">-&gt;</span> gField a)</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> a</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> m (fField a)</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> m (struct fArr fField)</span></code></pre></div>
+<h2 id="conclusion">Conclusion</h2>
+<p>When you’re in the trenches of a tutorial like this, it can be hard to see the forest for the trees. Especially when working with nested structs and arrays, our types got pretty involved. However, I hope I have also been able to convince you that when this approach works, it can work <em>really</em> well. The library author (person who defines the descriptor) gets a lot of power, and the user (person who implements the descriptor) only has to define a single generic traversal. Furthermore, since we aren’t using any existing abstractions, we get to completely tailor it to our own needs, as you saw in the array example.</p>
+<p>Ultimately, I’m not sure if the ideas here are going to be useful for many people. I have worked with libraries that horribly over-complicated their FFI so I know there are at least <em>some</em> people who might find this useful, but that’s not really the point of this post. Most importantly, I think it’s a neat example of how we can write wonderful abstract interfaces with <em>just</em> <code>RankNTypes</code> and some polymorphism in the right places.</p>
+<p>If you have any questions or criticism, feel free to contact me.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>Alternate title: <em>Gospel of <code>RankNTypes</code>, the One True Extension</em><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>We can actually write incomprehensible code <em>without</em> them!<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>Which is why this works better as a blog post than a library<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>Or more. You might want to make a special case for <code>String</code> types, or dynamically sized arrays…<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<div class="footer">Made with pandoc and duct tape. <a href="https://jonascarpay.com/rss.xml">RSS</a></div>
+</body>
+</html>

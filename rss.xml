@@ -1,0 +1,34 @@
+<rss version="2.0">
+	<channel>
+		<title>jonas' blog</title>
+		<link>https://jonascarpay.com</link>
+		<description>jonas' blog</description>
+		<item>
+			<title>The working programmer’s guide to setting up Haskell
+projects</title>
+			<link>https://jonascarpay.com/posts/2021-01-28-haskell-project-template.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-01-28-haskell-project-template.html</guid>
+			<description>
+				How to set up a Haskell project using Haskell.nix
+			</description>
+		</item>
+		<item>
+			<title>Monoidal Puzzle Solving</title>
+			<link>https://jonascarpay.com/posts/2020-05-26-solver.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2020-05-26-solver.html</guid>
+			<description>
+				Solve Sudokus and other puzzles by monoidally composing rules
+			</description>
+		</item>
+		<item>
+			<title>The Descriptor</title>
+			<link>https://jonascarpay.com/posts/2020-05-10-descriptor.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2020-05-10-descriptor.html</guid>
+			<description>
+				Add metadata to record fields, work with higher-kinded data without
+    resorting to Generics and Template Haskell, write safe and efficient
+    FFI code
+			</description>
+		</item>
+	</channel>
+</rss>
