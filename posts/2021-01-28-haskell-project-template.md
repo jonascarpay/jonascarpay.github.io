@@ -122,7 +122,7 @@ As mentioned above, in `template-haskell`, I just use a simple shell script, but
 
 At this point, I should note that by default, **Haskell.nix only sees files that are known to git.**
 They can have changes, but a new file that has not at least been staged is completely invisible to Haskell.nix.
-If you run into issues building or entering the shell, always first make sure that at all relevant files have at least been staged.
+If you run into issues building or entering the shell, always first make sure that all relevant files have at least been staged.
 
 ## Building
 
