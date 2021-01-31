@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
-set -euo pipefail
+source $stdenv/setup
 
-OUTDIR=${out:-output}
-mkdir -p "$OUTDIR/posts"
+set -exuo pipefail
+cd $src
+
+mkdir -p $out/posts
 TMP=${TMPDIR:-$(mktemp -d)}
 
 POSTS=$(find posts/ -type f | sort -r)
@@ -12,7 +13,7 @@ for post in $POSTS; do
   URL="${post%.md}.html"
 
   pandoc "$post" \
-    -o "$OUTDIR/$URL" \
+    -o "$out/$URL" \
     --standalone \
     -c ../style.css \
     --include-before-body=static/back.html \
@@ -27,13 +28,13 @@ for post in $POSTS; do
 done
 
 pandoc static/toc_header.html "$TMP/toc.html" \
-  -o "$OUTDIR/index.html" \
+  -o "$out/index.html" \
   --standalone \
   --metadata title="jonas' blog" \
   -c style.css \
   --include-after-body=static/footer.html
 
-cat >"$OUTDIR/rss.xml" <<EOM
+cat >"$out/rss.xml" <<EOM
 <rss version="2.0">
 	<channel>
 		<title>jonas' blog</title>
@@ -44,5 +45,5 @@ $(cat $TMP/rss_body)
 </rss>
 EOM
 
-cp static/style.css "$OUTDIR"
-cp static/CNAME "$OUTDIR"
+cp static/style.css $out
+cp static/CNAME $out
