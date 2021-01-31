@@ -146,7 +146,7 @@
 <p>For reference, here are my <a href="https://github.com/jonascarpay/template-haskell/blob/master/pkgs.nix"><code>pkgs.nix</code></a>(called <code>default.nix</code> in the manual) and <a href="https://github.com/jonascarpay/template-haskell/blob/master/shell.nix"><code>shell.nix</code></a>.</p>
 <p>To turn your project into an actual template, you can get as fancy as you want. As mentioned above, in <code>template-haskell</code>, I just use a simple shell script, but if you want you could also use <a href="https://github.com/cookiecutter/cookiecutter">cookiecutter</a>.</p>
 <h2 id="adding-files">Adding files</h2>
-<p>At this point, I should note that by default, <strong>Haskell.nix only sees files that are known to git.</strong> They can have changes, but a new file that has not at least been staged is completely invisible to Haskell.nix. If you run into issues building or entering the shell, always first make sure that at all relevant files have at least been staged.</p>
+<p>At this point, I should note that by default, <strong>Haskell.nix only sees files that are known to git.</strong> They can have changes, but a new file that has not at least been staged is completely invisible to Haskell.nix. If you run into issues building or entering the shell, always first make sure that all relevant files have at least been staged.</p>
 <h2 id="building">Building</h2>
 <p>You actually have two ways of building a project; purely with Nix or with Nix + Cabal. They have slightly different use cases, so it’s probably a good idea to familiarize yourself with both.</p>
 <h3 id="building-with-nix-cabal">Building with Nix + Cabal</h3>
