@@ -186,7 +186,11 @@ Did you add everything to git?
 See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization)
 
 ### The shell is slow!
-See the point about Materialization above, or consider using [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell).
+See the point about Materialization above, and/or consider using [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell).
+
+### I get warnings when I build the project/enter my `nix-shell`!
+This is also related to materialization, if you properly configure materialization the warnings will disappear.
+You can safely ignore these warnings, though, and I usually don't bother.
 
 ### Why is CI building GHC?
 
