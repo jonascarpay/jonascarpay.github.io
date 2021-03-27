@@ -83,9 +83,10 @@ Second, you need to set up the [IOHK binary cache](https://input-output-hk.githu
 _Technically_ this is optional, but if you don't you will build GHC from scratch, which takes... a while.
 
 ### Project setup
-Unlike, say, Stack, Haskell.nix is just a Nix library, it doesn't have any fancy CLI tools that create a project for you.
-For that reason, you probably want to use a project template that you copy whenever you start a new project.
+Unlike, say, Stack, Haskell.nix is _just_ a Nix library, it doesn't have any fancy CLI tools that create a project for you.
+For that reason, you're going to want to use a project template that you copy whenever you start a new project.
 The Haskell.nix parts are going to be the exact same between your projects, so this should be very easy.
+You have two options here; you can use my [template-haskell](https://github.com/jonascarpay/template-haskell) template project, or you can create your own.
 
 #### Using [template-haskell](https://github.com/jonascarpay/template-haskell)
 
@@ -103,15 +104,16 @@ If you want to change the GHC version, you can do so by changing the string in `
 
 #### Making one yourself
 As mentioned before, Haskell.nix works _on top_ of either a `stack.yaml` or `cabal.project` project definition.
-You don't need the tools _themselves_, but you will need a valid project.
+You don't need `stack` or `cabal` _themselves_, but you will need a valid project.
 So the first order of business is to set that up.
-It doesn't really matter how you do this (you probably already have a preferred way already).
+It doesn't really matter how you do this, and you might already have a preferred way, but if not I recommend using Stack's `stack new` command.
+Again, you only need to do this once.
 
 Once done, you need to set up `Haskell.nix`.
 This is typically done by adding two Nix files; one that describes the project, and one that describes your development shell.
 The Haskell.nix manual has clear instructions for both parts, see [Scaffolding](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#scaffolding) and [How to get a development shell](https://input-output-hk.github.io/haskell.nix/tutorials/development/#how-to-get-a-development-shell).
-Getting the tools we want is a matter of adding them to the `tools` section in the `shellFor`.
-You don't actually have to specify their versions, you can put `"latest"`.
+Getting the tools we want is a matter of adding them to the `tools` section in the `shellFor` section in `shell.nix`.
+As you can see you don't actually have to specify their versions, you can put `"latest"`.
 
 For reference, here are my [`pkgs.nix`](https://github.com/jonascarpay/template-haskell/blob/master/pkgs.nix) (what's called `default.nix` in the manual) and [`shell.nix`](https://github.com/jonascarpay/template-haskell/blob/master/shell.nix).
 
