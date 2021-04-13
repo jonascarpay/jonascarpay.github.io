@@ -188,7 +188,7 @@ Did you add everything to git?
 See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization)
 
 ### The shell is slow!
-See the point about Materialization above, and/or consider using either [`lorri`](https://github.com/target/lorri) or [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell).
+See the point about Materialization above, and/or consider using [`lorri`](https://github.com/target/lorri), [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell), or my personal favorite, [`nix-direnv`](https://github.com/nix-community/nix-direnv).
 
 ### I get warnings when I build the project/enter my `nix-shell`!
 This is also related to materialization, if you properly configure materialization the warnings will disappear.
