@@ -118,20 +118,20 @@
 <h3 id="minimal-configuration">Minimal configuration</h3>
 <p>From deciding I want to make a project, to opening my editor and writing Haskell code cannot take more than 30 seconds.</p>
 <h2 id="the-solution">The solution</h2>
-<p>In my opinion, the key to get to this point is by using one of Haskell’s best kept secrets, <a href="https://github.com/input-output-hk/haskell.nix">IOHK’s <code>haskell.nix</code></a>. It is a collection of nix tools that are meant to replace the default Nix Haskell infrastructure. It is well-documented, under active development, used in production, and most importantly, the only tool that comes close to allowing us to achieve the goals outlined above.</p>
+<p>In my opinion, the key to get to this point is by using one of Haskell’s best kept secrets, <a href="https://github.com/input-output-hk/haskell.nix">IOHK’s <code>haskell.nix</code></a>. It is a collection of nix tools that are meant to replace the default Nix Haskell infrastructure. Even though it is not very well known or widely used, it is well-documented, actively maintained, and used in production.</p>
 <p>The way that Haskell.nix works is that you define a Stack or Cabal project as normal, but you let Haskell.nix take care of acquiring dependencies and tools, and setting up a development shell.</p>
 <p>Fair warning, while you don’t have to write a single line of nix code<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, it helps a lot if you’re at least familiar with the basics of nix. I realize that is a non-starter for some people, and that’s OK, we can still be friends.</p>
 <h3 id="why-not-just-use">Why not just use…</h3>
 <h4 id="stackcabal">…Stack/Cabal</h4>
-<p>As mentioned in the intro, getting all your tools to work properly can be very finicky, since the tools and your project all need to be compiled with the same version of GHC. Getting it tooling working for a single project can be tricky, let alone if you have multiple projects that have different versions of GHC. Haskell.nix makes this a non-issue.</p>
+<p>As mentioned in the intro, getting all your tools to work properly can be very finicky, since the tools and your project all need to be compiled with the same version of GHC. This is true for individual projects, but it gets a lot worse if you have multiple projects requiring different versions of GHC. Haskell.nix makes this a non-issue.</p>
 <h4 id="pure-nix">…“Pure” Nix</h4>
-<p>Haskell.nix basically automatically takes care of everything you need to do when setting up a Haskell project in Nix. Look at any of the myriad Haskell + Nix tutorials to see how involved that can get.</p>
+<p>As nice as Nix is, setting up a Haskell project and development environment in Nix can get very involved. Haskell.nix standardizes, streamlines, and automates the entire process, allowing you to focus on writing Haskell instead of Nix.</p>
 <h2 id="setup">Setup</h2>
 <h3 id="preliminary-setup">Preliminary setup</h3>
 <p>First, you need the <a href="https://nixos.org/">nix package manager</a>.</p>
 <p>Second, you need to set up the <a href="https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#setting-up-the-binary-cache">IOHK binary cache</a>. <em>Technically</em> this is optional, but if you don’t you will build GHC from scratch, which takes… a while.</p>
 <h3 id="project-setup">Project setup</h3>
-<p>Unlike, say, Stack, Haskell.nix is <em>just</em> a Nix library, it doesn’t have any fancy CLI tools that create a project for you. For that reason, you’re going to want to use a project template that you copy whenever you start a new project. The Haskell.nix parts are going to be the exact same between your projects, so this should be very easy. You have two options here; you can use my <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a> template project, or you can create your own.</p>
+<p>Unlike, say, Stack, Haskell.nix is <em>just</em> a Nix library, so it doesn’t have any CLI tools that create a project for you. For that reason, you’re going to want to use a project template that you copy whenever you start a new project. The Haskell.nix parts are going to be the exact same between your projects, so this should be very easy. You have two options here; you can use my <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a> template project, or you can create your own.</p>
 <h4 id="using-template-haskell">Using <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a></h4>
 <p>Run these commands, replacing <my-project> with whatever you want your project to be called.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/jonascarpay/template-haskell <span class="op">&lt;</span>my-project<span class="op">&gt;</span></span>
@@ -140,13 +140,13 @@
 <p><code>wizard.sh</code> will prompt you for your info, replace all placeholders, and reinitialize the git history.</p>
 <p>From here, enter the shell and you should have all tools available to you. If you want to change the GHC version, you can do so by changing the string in <code>pkgs.nix</code>.</p>
 <h4 id="making-one-yourself">Making one yourself</h4>
-<p>As mentioned before, Haskell.nix works <em>on top</em> of either a <code>stack.yaml</code> or <code>cabal.project</code> project definition. You don’t need <code>stack</code> or <code>cabal</code> <em>themselves</em>, but you will need a valid project. So the first order of business is to set that up. It doesn’t really matter how you do this, and you might already have a preferred way, but if not I recommend using Stack’s <code>stack new</code> command. Again, you only need to do this once.</p>
+<p>As mentioned before, Haskell.nix works <em>on top</em> of either a <code>stack.yaml</code> or <code>cabal.project</code>-based project definition. You don’t need <code>stack</code> or <code>cabal</code> <em>themselves</em>, but you will need a valid project. So, first order of business is to set that up. It doesn’t really matter how you do this, and you might already have a preferred way, but if not I recommend using Stack’s <code>stack new</code> command. Again, you only need to do this once.</p>
 <p>Once done, you need to set up <code>Haskell.nix</code>. This is typically done by adding two Nix files; one that describes the project, and one that describes your development shell. The Haskell.nix manual has clear instructions for both parts, see <a href="https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#scaffolding">Scaffolding</a> and <a href="https://input-output-hk.github.io/haskell.nix/tutorials/development/#how-to-get-a-development-shell">How to get a development shell</a>. Getting the tools we want is a matter of adding them to the <code>tools</code> section in the <code>shellFor</code> section in <code>shell.nix</code>. As you can see you don’t actually have to specify their versions, you can put <code>"latest"</code>.</p>
 <p>For reference, here are my <a href="https://github.com/jonascarpay/template-haskell/blob/master/pkgs.nix"><code>pkgs.nix</code></a> (what’s called <code>default.nix</code> in the manual) and <a href="https://github.com/jonascarpay/template-haskell/blob/master/shell.nix"><code>shell.nix</code></a>.</p>
-<p>Once you’ve set up your project and shell, you can pretty much share these two files between all your projects.</p>
-<p>To turn your project into an actual template, you can make things as simple or fancy as you want. As mentioned above, in <code>template-haskell</code>, I just use a simple shell script, but if you want you could also use <a href="https://github.com/cookiecutter/cookiecutter">cookiecutter</a>.</p>
-<h2 id="adding-files">Adding files</h2>
-<p>At this point, I should note that by default, <strong>Haskell.nix only sees files that are known to git.</strong> They can have changes, but a new file that has not at least been staged is completely invisible to Haskell.nix. If you run into issues building or entering the shell, always first make sure that all relevant files have at least been staged.</p>
+<p>Once you’ve set up your project and shell, you can pretty much copy/share these two files between all your projects.</p>
+<p>To turn your project into an actual template, you can make things as simple or fancy as you want. As mentioned above, in <code>template-haskell</code>, I just use a simple shell script that replaces a few placeholder strings, but if you want you could use something like <a href="https://github.com/cookiecutter/cookiecutter">cookiecutter</a>.</p>
+<h2 id="adding-files-to-your-project">Adding files to your project</h2>
+<p>Unlike the normal nix behavior, by default, <strong>Haskell.nix only sees files that are known to git.</strong> They can have changes, but a new file that has not at least been staged is completely invisible to Haskell.nix. If you run into issues building or entering the shell, always first make sure that all relevant files have at least been staged.</p>
 <h2 id="building">Building</h2>
 <p>You actually have two ways of building a project; purely with Nix or with Nix + Cabal. They have slightly different use cases, so it’s probably a good idea to familiarize yourself with both.</p>
 <h3 id="building-with-nix-cabal">Building with Nix + Cabal</h3>
@@ -163,7 +163,7 @@
 </ul>
 <p>That means that you typically don’t want to use this during normal development, but it’s great for CI, or things that you don’t build often.</p>
 <p>You build like this:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nix-build pkgs.nix <span class="at">-A</span> hsPkgs.<span class="op">&lt;</span>my-project<span class="op">&gt;</span>.components.<span class="op">&lt;</span>component<span class="op">&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nix-build pkgs.nix <span class="at">-A</span> hsPkgs.<span class="op">&lt;</span>my-package<span class="op">&gt;</span>.components.<span class="op">&lt;</span>component<span class="op">&gt;</span></span></code></pre></div>
 <p>Where <code>&lt;component&gt;</code> is one of:</p>
 <ul>
 <li><code>lib</code></li>
@@ -174,11 +174,11 @@
 <p><strong>Tip:</strong> you can explore these from the Nix REPL like this:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nix repl</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">nix-repl</span><span class="op">&gt;</span> :l ./pkgs.nix</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">nix-repl</span><span class="op">&gt;</span> hsPkgs.<span class="op">&lt;</span>my-project<span class="op">&gt;</span>.components.<span class="kw">|</span></span></code></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">nix-repl</span><span class="op">&gt;</span> hsPkgs.<span class="op">&lt;</span>my-package<span class="op">&gt;</span>.components.<span class="kw">|</span></span></code></pre></div>
 <p>If you then press tab, the completion shows you the available components.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="something-doesnt-work">Something doesn’t work</h3>
-<p>Did you add everything to git?</p>
+<p>If you’re like me, you probably just forgot to stage a file in git.</p>
 <h3 id="nix-evaluation-is-slow">Nix evaluation is slow!</h3>
 <p>See <a href="https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization">Materialization</a></p>
 <h3 id="the-shell-is-slow">The shell is slow!</h3>
@@ -188,7 +188,7 @@
 <h3 id="why-is-ci-building-ghc">Why is CI building GHC?</h3>
 <p><code>template-haskell</code> also contains a CI matrix. The Nix pipeline uses cachix to cache builds, specifically the <code>jmc</code> cachix. You don’t have push access to this, so if you change something that triggers a GHC change it will be rebuilt every time. I recommend you create and set up your own personal cachix.</p>
 <h3 id="i-cannot-rebuild-without-a-network-connection">I cannot rebuild without a network connection?</h3>
-<p>Without going into the details, this happens because the git-cleaned source file is itself a derivation that Nix will attempt to get from cache. Simply build with <code>--option substituters ""</code> to disable cache lookup.</p>
+<p>This happens when nix tries to fetch one of the intermediate derivations from cache. Simply build with <code>--option substituters ""</code> to disable cache lookup.</p>
 <section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
