@@ -4,6 +4,15 @@
 		<link>https://jonascarpay.com</link>
 		<description>jonas' blog</description>
 		<item>
+			<title>Parsing a programming language</title>
+			<link>https://jonascarpay.com/posts/2021-05-16-parsing-programming-language.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-05-16-parsing-programming-language.html</guid>
+			<description>
+				I recently rewrote the parser for my programming language – twice.
+    Here are some of the things I learned along the way.
+			</description>
+		</item>
+		<item>
 			<title>The working programmer’s guide to setting up Haskell
 projects</title>
 			<link>https://jonascarpay.com/posts/2021-01-28-haskell-project-template.html</link>
