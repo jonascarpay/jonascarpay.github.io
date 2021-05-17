@@ -10,7 +10,7 @@ tags:
 
 Choosing a parsing library in Haskell can be tough.
 I recently rewrote the parser for my programming language's fairly complicated grammar, first from [`megaparsec`](https://hackage.haskell.org/package/megaparsec) to [`happy`](https://hackage.haskell.org/package/happy), and then from `happy` to a custom solution.
-So, I had the pleasure of reimplementing the same grammar in three times, in three very different systems.
+So, I had the pleasure of reimplementing the same grammar three times, in three very different systems.
 Here are some of the things I learned from that experience.
 
 This post is not about how you write your first parser, but rather about what things to consider when writing a more complicated parser.
