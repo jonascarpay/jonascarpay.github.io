@@ -97,7 +97,7 @@
 <h1 class="title">Parsing a programming language</h1>
 <p class="date">2021-05-16</p>
 </header>
-<p>Choosing a parsing library in Haskell can be tough. I recently rewrote the parser for my programming language’s fairly complicated grammar, first from <a href="https://hackage.haskell.org/package/megaparsec"><code>megaparsec</code></a> to <a href="https://hackage.haskell.org/package/happy"><code>happy</code></a>, and then from <code>happy</code> to a custom solution. So, I had the pleasure of reimplementing the same grammar in three times, in three very different systems. Here are some of the things I learned from that experience.</p>
+<p>Choosing a parsing library in Haskell can be tough. I recently rewrote the parser for my programming language’s fairly complicated grammar, first from <a href="https://hackage.haskell.org/package/megaparsec"><code>megaparsec</code></a> to <a href="https://hackage.haskell.org/package/happy"><code>happy</code></a>, and then from <code>happy</code> to a custom solution. So, I had the pleasure of reimplementing the same grammar three times, in three very different systems. Here are some of the things I learned from that experience.</p>
 <p>This post is not about how you write your first parser, but rather about what things to consider when writing a more complicated parser.</p>
 <h2 id="parser-combinators-vs.-parser-generators">Parser combinators vs. parser generators</h2>
 <p>The first choice you have to make is between parser <em>combinators</em> and parser <em>generators</em>.</p>
