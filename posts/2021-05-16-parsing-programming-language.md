@@ -34,7 +34,7 @@ For the rest of this post, when I talk about parser generators, you can assume I
 Conceptually, the main advantage of generators is the fact that they perform static analysis of your grammar.
 Writing a parser is tricky, and having something check whether your grammar actually makes sense can save you many headaches.
 A lot of parsing theory focuses on cases where generators can handle certain recursive grammars that are tricky to correctly implement using combinators.
-In practice, however, even without recursion it's just easy write incorrect and hard-to-debug parsers using combinators, which generators would rightly reject at compile time.
+In practice, however, even without recursion it's just easy to write incorrect and hard-to-debug parsers using combinators, which generators would rightly reject at compile time.
 
 Unfortunately, while the parser generator will typically give you a good description of ambiguities/conflicts, it can still be tricky to actually diagnose and fix your grammar.
 This is exacerbated by the fact that what is and is not a conflict can depend on the algorithm that the generator uses.
