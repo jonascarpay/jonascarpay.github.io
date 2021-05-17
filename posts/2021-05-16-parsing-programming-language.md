@@ -52,7 +52,7 @@ I recommend taking a look at [`makeExprParser` from `parser-combinators`](https:
 ### Integration
 
 The fact that parser combinators are ordinary Haskell libraries makes them really easy to integrate into your project.
-On the other hand, a parser _generator_ stack with all of its glue code can require you to have duplicate definitions in several places, which means they require many times more lines of code parser combinators.
+On the other hand, a parser _generator_ stack with all of its glue code can require you to have duplicate definitions in several places, and in general just require many times more lines of code than parser combinators.
 
 While annoying, I personally don't think this is a huge problem in practice.
 The tools tend to do a good job of warning you about missing/wrong/dead code, so the actual burden of maintenance is not drastically higher.
