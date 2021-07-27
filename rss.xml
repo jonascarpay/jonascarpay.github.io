@@ -8,8 +8,8 @@
 			<link>https://jonascarpay.com/posts/2021-07-27-agenix.html</link>
 			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-07-27-agenix.html</guid>
 			<description>
-				A practical guide on securely managing and deploying secrets in your
-    nix store and configuration with agenix
+				A practical guide on securely managing and deploying secrets with
+    agenix
 			</description>
 		</item>
 		<item>
