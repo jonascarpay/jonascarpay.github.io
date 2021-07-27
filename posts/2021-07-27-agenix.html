@@ -117,7 +117,7 @@
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Option 1 avoids the nix store, but it is not declarative; we need to manually make sure that the file actually will exist in the specified path.</p>
 <p>With option 2, we have nix manage the file for us, but now it ends up in the nix store.</p>
-<p>With agenix, we get the best of both worlds:</p>
+<p>With <code>agenix</code>, we get the best of both worlds:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>{</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  age.secrets.myServerCredentials.file = path/to/credentials.age;</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
