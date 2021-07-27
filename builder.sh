@@ -31,16 +31,16 @@ done
 pandoc static/toc_header.html "$TMP/toc.html" \
   -o "$out/index.html" \
   --standalone \
-  --metadata title="jonas' blog" \
+  --metadata title="jonas's blog" \
   -c style.css \
   --include-after-body=static/footer.html
 
 cat >"$out/rss.xml" <<EOM
 <rss version="2.0">
 	<channel>
-		<title>jonas' blog</title>
+		<title>jonas's blog</title>
 		<link>https://jonascarpay.com</link>
-		<description>jonas' blog</description>
+		<description>jonas's blog</description>
 $(cat $TMP/rss_body)
 	</channel>
 </rss>
