@@ -1,8 +1,17 @@
 <rss version="2.0">
 	<channel>
-		<title>jonas' blog</title>
+		<title>jonas's blog</title>
 		<link>https://jonascarpay.com</link>
-		<description>jonas' blog</description>
+		<description>jonas's blog</description>
+		<item>
+			<title>Managing secrets with agenix</title>
+			<link>https://jonascarpay.com/posts/2021-07-27-agenix.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-07-27-agenix.html</guid>
+			<description>
+				A practical guide on securely managing and deploying secrets in your
+    nix store and configuration with agenix
+			</description>
+		</item>
 		<item>
 			<title>Parsing a programming language</title>
 			<link>https://jonascarpay.com/posts/2021-05-16-parsing-programming-language.html</link>

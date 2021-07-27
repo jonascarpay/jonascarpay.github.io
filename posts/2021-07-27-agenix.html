@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+  <meta name="dcterms.date" content="2021-07-27" />
+  <title>Managing secrets with agenix</title>
+  <meta property="og:title" content="Managing secrets with agenix" />
+  <meta property="twitter:title" content="Managing secrets with agenix" />
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+</head>
+<body>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Managing secrets with <code>agenix</code></h1>
+<p class="date">2021-07-27</p>
+</header>
+<p>Anything nix touches ends up in the store, and the store is world-readable<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Your nix configuration <a href="https://github.com/jonascarpay/nix">is on GitHub</a>, and therefore also world-readable<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. Sadly, at some point you will want to declaratively manage information that you’d like <em>not</em> to be world-readable. There are <a href="https://nixos.wiki/wiki/Comparison_of_secret_managing_schemes">many</a> ways to deal with this, and much virtual ink has been spilled on the subject, but generally I’ve found it to be easier and more flexible to just distribute secrets through other channels.</p>
+<p>That is, until I discovered <a href="https://github.com/ryantm/agenix"><code>agenix</code></a>. <code>agenix</code> requires almost no setup or overhead, and yet works seamlessly across multiple machines and users. We use it at <code>$WORK</code>, I <a href="https://github.com/jonascarpay/nix/tree/master/secrets">use it in my personal config</a>, and I’ve been very happy with it.</p>
+<p>Unfortunately, I find that the manual makes <code>agenix</code> seem more complicated than it is, and doesn’t really highlight what makes it so nice to use. So, here is <del>more evangelism for niche technologies</del> a brief, opinionated guide to <code>agenix</code>.</p>
+<h3 id="nixos-configuration">NixOS configuration</h3>
+<p>Start by importing the <code>agenix</code> module into your system configuration. The most straightforward way is just importing the tarball directly<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, but you can of course use your preferred method of dependency management here (niv, flakes, channels).</p>
+<p>From here, the concept is simple. You configure <code>agenix</code> with an encrypted file, you ask/specify where the decrypted file should go, and then <em>at boot time</em> the file gets decrypted and put in the promised location.</p>
+<h4 id="example">Example</h4>
+<p>As an example, let’s say we’re setting up an OpenVPN configuration:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Option 1</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass path/to/credentials.txt</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Option 2</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass </span>${path/to/credentials.txt}</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Option 1 avoids the nix store, but it is not declarative; we need to manually make sure that the file actually will exist in the specified path.</p>
+<p>With option 2, we have nix manage the file for us, but now it ends up in the nix store.</p>
+<p>With agenix, we get the best of both worlds:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  age.secrets.myServerCredentials.file = path/to/credentials.age;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass </span>${age.secrets.myServerCredentials.path}</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>The only thing nix ever sees is the encrypted <code>.age</code> file, so no unencrypted secrets will touch the nix store. By default, <code>age.secrets.myServerCredentials.path</code> will evaluate to <code>/run/secrets/myServerCredentials</code>, and early during boot our file gets decrypted and put there.</p>
+<p>That’s all there is to it on the NixOS side of things – one extra line of configuration. Of course, this still leaves questions like how you actually encrypt your file, or how the system decrypts the file.</p>
+<h3 id="working-with-secrets">Working with secrets</h3>
+<p><code>agenix</code> is powered by <a href="https://github.com/FiloSottile/age"><code>age</code></a>. <code>age</code> doesn’t have many features<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, but it has two that make it ideal for this use case: multiple recipients, and encryption using SSH keys.</p>
+<p>You have an SSH key, and your system(s) each have SSH keys<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>. Yours is the one typically found in <code>~/.ssh/</code>, and the one for your system is in <code>/etc/ssh/</code> or reported by <code>ssh-keyscan localhost</code>.</p>
+<p>This is perfect because (again) <code>age</code> can use SSH keys for encryption, but more importantly these are <em>exactly</em> the recipients of secrets: you, because you want to view/edit secrets, and your systems, because they need to decrypt the file at boot. In other words, all the cryptographic infrastructure <code>agenix</code> uses is already in place! This is why there was so little configuration required in the previous step, and fortunately this also extends to actually setting up/working with our secrets. It typically goes like this:</p>
+<ol type="1">
+<li><p>Start by making a folder in your nix config called <code>secrets</code>. This folder will contain your secrets, as well as a <code>secrets.nix</code> file.</p></li>
+<li><p>In the <code>secrets</code> folder, create your <code>secrets.nix</code> file. <code>secrets.nix</code> determines what files are encrypted with what keys. While <code>secrets.nix</code> is a nix file, it is not in any way actually part of the rest of your nix configuration, you never import it anywhere. It is only used when encrypting secrets, which we will do in the next step. This is the example <code>secrets.nix</code> file from <a href="https://github.com/ryantm/agenix#tutorial">the tutorial</a>:</p></li>
+</ol>
+<div class="sourceCode" id="cb4"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  user1 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL0idNvgGiucWgup/mP78zyC23uFjYq0evcWdjGQUaBH&quot;</span>;</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  user2 = <span class="st">&quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoQ9S7V+CufAgwoehnf2TqsJ9LTsu8pUA3FgpS2mdVwcMcTs++8P5sQcXHLtDmNLpWN4k7NQgxaY1oXy5e25x/4VhXaJXWEt3luSw+Phv/PB2+aGLvqCUirsLTAD2r7ieMhd/pcVf/HlhNUQgnO1mupdbDyqZoGD/uCcJiYav8i/V7nJWJouHA8yq31XS2yqXp9m3VC7UZZHzUsVJA9Us5YqF0hKYeaGruIHR2bwoDF9ZFMss5t6/pzxMljU/ccYwvvRDdI7WX4o4+zLuZ6RWvsU6LGbbb0pQdB72tlV41fSefwFsk4JRdKbyV3Xjf25pV4IXOTcqhy+4JTB/jXxrF&quot;</span>;</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  users = [ user1 user2 ];</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  system1 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPJDyIr/FSz1cJdcoW69R+NrWzwGK/+3gJpqD1t8L2zE&quot;</span>;</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  system2 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKzxQgondgEYcLpcPdJLrTdNgZ2gznOHCAxMdaceTUT1&quot;</span>;</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  systems = [ system1 system2 ];</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">in</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;secret1.age&quot;</span>.publicKeys = [ user1 system1 ];</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;secret2.age&quot;</span>.publicKeys = users ++ systems;</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<ol start="3" type="1">
+<li>Use <code>agenix -e &lt;filename&gt;</code> to edit files. One thing to note is that the system module doesn’t install the <code>agenix</code> executable – you still need to get that somewhere.</li>
+</ol>
+<p>That’s it! You now have secure declarative management of secrets. There’s not much else to <code>agenix</code>, aside from the <a href="https://github.com/ryantm/agenix#rekeying">rekeying if you change your keys</a>.</p>
+<h3 id="caveats">Caveats</h3>
+<h4 id="configuration">Configuration</h4>
+<p>One thing to watch out for is that incorporating your secrets in your config is not always as easy as it is in the OpenVPN example above. You might want to use secrets for options that were not designed to be kept secret, or use <code>agenix</code> for things that aren’t configured through nix at all.</p>
+<p>Two examples from my own config:</p>
+<ol type="1">
+<li><p>I want to add secret binary caches, but the <code>nix.binaryCaches</code> option is not compatible with <code>agenix</code>. So, we sidestep the usual cache declaration mechanism and <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L4">go through <code>nix.extraOptions</code> and the new <code>!include</code> directive</a>.</p></li>
+<li><p>AWS credentials have a similar issue, but don’t have any sort of <code>include</code> mechanism. So, we just override the default path so it <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L8">writes to <code>/root/.aws/credentials</code> directly</a>.</p></li>
+</ol>
+<p>Usually, it just requires some creativity, but it is not unimaginable that in some situations <code>agenix</code> just does not work out.</p>
+<h4 id="some-thoughts-on-security">Some thoughts on security</h4>
+<p>I am not a security expert, the author of <code>agenix</code> <a href="https://github.com/ryantm/agenix#threat-modelwarnings">is not a security expert</a>, so if you’re like me, maybe you’re a bit hesitant of trusting <code>agenix</code> with your secrets. I’m not here to convince you of anything, but here is some research that you might find helpful.</p>
+<p>First of all, the <a href="https://github.com/FiloSottile">author of <code>age</code> itself <em>is</em> a security expert</a>. I found <a href="https://neilmadden.blog/2019/12/30/a-few-comments-on-age/">some discussion of <em>potential</em> attack vectors against <code>age</code></a>, but based on <em>my understanding</em> of <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html">the underlying reasoning</a>, this would not even apply to <code>agenix</code> in the first place, since it’s not high-volume network traffic.</p>
+<p>Second, you can very easily audit <code>agenix</code> yourself, it’s just <a href="https://github.com/ryantm/agenix/blob/master/pkgs/agenix.nix">150 lines of pretty understandable bash in the encryption code</a>, and <a href="https://github.com/ryantm/agenix/blob/master/modules/age.nix">another 100 in the nix module</a>.</p>
+<p>For what it’s worth, I trust it enough to make my encrypted secrets (including work-related secrets) public and then brag about it in a blog post, so at least if something breaks we’re both screwed.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>Or at least to every process on your computer<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>Or at least to Microsoft<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><div class="sourceCode" id="cb1"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{ imports = [ <span class="st">&quot;</span>${<span class="bu">builtins</span>.<span class="bu">fetchTarball</span> <span class="st">&quot;https://github.com/ryantm/agenix/archive/master.tar.gz&quot;</span>}<span class="st">/modules/age&quot;</span> ]; }</span></code></pre></div>
+<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn4" role="doc-endnote"><p>A good thing for a cryptographic application!<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5" role="doc-endnote"><p>more info on the distinction between user and system keys <a href="https://unix.stackexchange.com/questions/439467/what-is-the-difference-between-etc-ssh-and-ssh">here</a><a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<div class="footer">
+	<a href="https://github.com/jonascarpay/jonascarpay.github.io">Questions/suggestions on Github</a> -
+	<a href="https://jonascarpay.com/rss.xml">RSS</a> </br> </br>
+	Made with pandoc and duct tape.
+</div>
+</body>
+</html>
