@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!--
+    From https://gitlab.com/rycee/presentations/-/raw/master/2019-12-cph-nur/nix-syntax.xml
+    Based on the java syntax file 1.19 by Alfredo Luiz Foltran Fialho (alfoltran@ig.com.br)
+-->
+<language name="Nix" version="6" kateversion="5.0" section="Sources" extensions="*.nix" license="LGPL" author="Robert Helgesson (robert@rycee.net)">
+	<highlighting>
+		<list name="keywords">
+            <item>if</item>
+            <item>then</item>
+            <item>else</item>
+            <item>with</item>
+            <item>let</item>
+            <item>in</item>
+            <item>rec</item>
+            <item>inherit</item>
+            <item>or</item>
+		</list>
+
+		<list name="builtins">
+            <item>builtins</item>
+            <item>baseNameOf</item>
+            <item>derivation</item>
+            <item>dirOf</item>
+            <item>true</item>
+            <item>false</item>
+            <item>null</item>
+            <item>isNull</item>
+            <item>toString</item>
+            <item>fetchTarball</item>
+            <item>import</item>
+            <item>map</item>
+            <item>removeAttrs</item>
+		</list>
+
+		<contexts>
+			<context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+				<keyword attribute="Keyword" context="#stay" String="keywords"/>
+				<keyword attribute="Builtins" context="#stay" String="builtins"/>
+				<Float attribute="Float" context="#stay"/>
+				<HlCOct attribute="Octal" context="#stay"/>
+				<HlCHex attribute="Hex" context="#stay"/>
+				<Int attribute="Decimal" context="#stay"/>
+				<HlCChar attribute="Char" context="#stay"/>
+				<RegExpr attribute="Char" context="#stay" String="'\\u[0-9a-fA-F]{4}'"/>
+                <StringDetect attribute="String" String="&apos;&apos;" context="MultiLineString" beginRegion="MultiLineString"/>
+                <DetectChar attribute="String" context="String" char="&quot;"/>
+				<DetectChar attribute="Comment" context="Comment" char="#"/>
+				<DetectChar attribute="Symbol" context="#stay" char="{" beginRegion="Brace1"/>
+				<DetectChar attribute="Symbol" context="#stay" char="}" endRegion="Brace1"/>
+				<RegExpr attribute="Keyword" context="#stay" String="\.{3,3}\s+" />
+				<AnyChar attribute="Symbol" context="#stay" String=":!%&amp;+,-/.*&lt;=&gt;?[]|~^&#59;"/>
+			</context>
+
+			<context attribute="String" lineEndContext="#pop" name="String">
+                <Detect2Chars attribute="Substitution" context="Substitution" char="$" char1="{" />
+				<DetectChar attribute="String" context="#pop" char="&quot;"/>
+			</context>
+
+            <context attribute="String" lineEndContext="#stay" name="MultiLineString">
+                <Detect2Chars attribute="Substitution" context="Substitution" char="$" char1="{" />
+                <StringDetect attribute="String" context="#pop" String="&apos;&apos;" endRegion="MultiLineString"/>
+            </context>
+
+            <context name="Substitution" attribute="Normal Text" lineEndContext="#stay">
+                <DetectChar attribute="Substitution" char="}" context="#pop"/>
+                <IncludeRules context="Normal"/>
+            </context>
+
+			<context attribute="Comment" lineEndContext="#pop" name="Comment">
+                <IncludeRules context="##Alerts" />
+                <IncludeRules context="##Modelines" />
+			</context>
+		</contexts>
+		<itemDatas>
+			<itemData name="Normal Text"  defStyleNum="dsNormal"/>
+			<itemData name="Keyword"      defStyleNum="dsKeyword"/>
+			<itemData name="Decimal"      defStyleNum="dsDecVal"/>
+			<itemData name="Octal"        defStyleNum="dsBaseN"/>
+			<itemData name="Hex"          defStyleNum="dsBaseN"/>
+			<itemData name="Float"        defStyleNum="dsFloat"/>
+			<itemData name="Char"         defStyleNum="dsChar"/>
+			<itemData name="String"       defStyleNum="dsString"/>
+			<itemData name="String Char"  defStyleNum="dsSpecialChar"/>
+			<itemData name="PrintfString" defStyleNum="dsString"/>
+			<itemData name="Comment"      defStyleNum="dsComment"/>
+			<itemData name="Symbol"       defStyleNum="dsNormal"/>
+			<itemData name="Builtins"     defStyleNum="dsBuiltIn" bold="1" italic="0"/>
+		</itemDatas>
+	</highlighting>
+	<general>
+		<comments>
+			<comment name="singleLine" start="#"/>
+			<comment name="multiLine" start="/*" end="*/"/>
+		</comments>
+		<keywords casesensitive="1"/>
+	</general>
+</language>

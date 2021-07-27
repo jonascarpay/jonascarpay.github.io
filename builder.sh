@@ -15,6 +15,7 @@ for post in $POSTS; do
   pandoc "$post" \
     -o "$out/$URL" \
     --standalone \
+    --syntax-definition=static/nix-syntax.xml \
     -c ../style.css \
     --include-before-body=static/back.html \
     --include-after-body=static/back.html \
