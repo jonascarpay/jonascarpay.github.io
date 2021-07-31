@@ -82,6 +82,22 @@ First, you need the [nix package manager](https://nixos.org/).
 Second, you need to set up the [IOHK binary cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#setting-up-the-binary-cache).
 _Technically_ this is optional, but if you don't you will build GHC from scratch, which takes... a while.
 
+### A note on flakes
+You may have heard of nix's upcoming[^flake] new _flakes_ feature.
+Flakes are a standardised and composable way of defining nix packages, and a natural fit for `haskell.nix`.
+Flakes are generally my preferred way of defining packages, but unfortunately, the feature is not yet very stable, which makes it hard for me to recommend to people new to nix.
+
+If you feel adventurous at some point, take a look at [Getting started with flakes](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes/) section of the manual, or the [`flakes` branch of `template-haskell`](https://github.com/jonascarpay/template-haskell/tree/flakes).
+The differences are:
+
+- `pkgs.nix` and `shell.nix` file have been replaced by the `flake.nix` file
+- you enter the shell using `nix shell` instead of `nix-shell`
+- pinning `haskell.nix` is now done through `flake.lock`
+- evaluation is a lot quicker
+- CI has been updated to work with flakes
+
+[^flake]: it's been upcoming for a long time.
+
 ### Project setup
 Unlike, say, Stack, Haskell.nix is _just_ a Nix library, so it doesn't have any CLI tools that create a project for you.
 For that reason, you're going to want to use a project template that you copy whenever you start a new project.
@@ -185,10 +201,11 @@ If you then press tab, the completion shows you the available components.
 If you're like me, you probably just forgot to stage a file in git.
 
 ### Nix evaluation is slow!
-See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization)
+See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization) or consider switching to flakes.
 
 ### The shell is slow!
 See the point about Materialization above, and/or consider using [`lorri`](https://github.com/target/lorri), [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell), or my personal favorite, [`nix-direnv`](https://github.com/nix-community/nix-direnv).
+Nix flakes also helps out here.
 
 ### I get warnings when I build the project/enter my `nix-shell`!
 This is also related to materialization, if you properly configure materialization the warnings will disappear.
