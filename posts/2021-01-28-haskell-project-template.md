@@ -85,16 +85,8 @@ _Technically_ this is optional, but if you don't you will build GHC from scratch
 ### A note on flakes
 You may have heard of nix's upcoming[^flake] new _flakes_ feature.
 Flakes are a standardised and composable way of defining nix packages, and a natural fit for `haskell.nix`.
-Flakes are generally my preferred way of defining packages, but unfortunately, the feature is not yet very stable, which makes it hard for me to recommend to people new to nix.
-
-If you feel adventurous at some point, take a look at [Getting started with flakes](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes/) section of the manual, or the [`flakes` branch of `template-haskell`](https://github.com/jonascarpay/template-haskell/tree/flakes).
-The differences are:
-
-- `pkgs.nix` and `shell.nix` file have been replaced by the `flake.nix` file
-- you enter the shell using `nix shell` instead of `nix-shell`
-- pinning `haskell.nix` is now done through `flake.lock`
-- evaluation is a lot quicker
-- CI has been updated to work with flakes
+Flakes are generally my preferred way of defining packages, but unfortunately, the feature is not very stable yet, which makes it hard for me to recommend it to beginners.
+If you're already using flakes though, take a look at the [`flakes` branch of `template-haskell`](https://github.com/jonascarpay/template-haskell/tree/flakes) and the [Getting started with flakes](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes/) section of the manual.
 
 [^flake]: it's been upcoming for a long time.
 
