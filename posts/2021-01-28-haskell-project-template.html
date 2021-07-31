@@ -130,6 +130,9 @@
 <h3 id="preliminary-setup">Preliminary setup</h3>
 <p>First, you need the <a href="https://nixos.org/">nix package manager</a>.</p>
 <p>Second, you need to set up the <a href="https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#setting-up-the-binary-cache">IOHK binary cache</a>. <em>Technically</em> this is optional, but if you don’t you will build GHC from scratch, which takes… a while.</p>
+<h3 id="a-note-on-flakes">A note on flakes</h3>
+<p>You may have heard of nix’s upcoming<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> new <em>flakes</em> feature. Flakes are a standardised and composable way of defining nix packages, and a natural fit for <code>haskell.nix</code>. Flakes are generally my preferred way of defining packages, but unfortunately, the feature is not yet very stable, which makes it hard for me to recommend to people new to nix.</p>
+<p>If you feel adventurous at some point, take a look at <a href="https://input-output-hk.github.io/haskell.nix/tutorials/getting-started-flakes/">Getting started with flakes</a> section of the manual, or the <a href="https://github.com/jonascarpay/template-haskell/tree/flakes"><code>flakes</code> branch of <code>template-haskell</code></a>. The differences are: - <code>pkgs.nix</code> and <code>shell.nix</code> file have been replaced by the <code>flake.nix</code> file - you enter the shell using <code>nix shell</code> instead of <code>nix-shell</code> - pinning <code>haskell.nix</code> is now done through <code>flake.lock</code> - evaluation is a lot quicker - CI has been updated to work with flakes</p>
 <h3 id="project-setup">Project setup</h3>
 <p>Unlike, say, Stack, Haskell.nix is <em>just</em> a Nix library, so it doesn’t have any CLI tools that create a project for you. For that reason, you’re going to want to use a project template that you copy whenever you start a new project. The Haskell.nix parts are going to be the exact same between your projects, so this should be very easy. You have two options here; you can use my <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a> template project, or you can create your own.</p>
 <h4 id="using-template-haskell">Using <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a></h4>
@@ -180,9 +183,9 @@
 <h3 id="something-doesnt-work">Something doesn’t work</h3>
 <p>If you’re like me, you probably just forgot to stage a file in git.</p>
 <h3 id="nix-evaluation-is-slow">Nix evaluation is slow!</h3>
-<p>See <a href="https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization">Materialization</a></p>
+<p>See <a href="https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization">Materialization</a> or consider switching to flakes.</p>
 <h3 id="the-shell-is-slow">The shell is slow!</h3>
-<p>See the point about Materialization above, and/or consider using <a href="https://github.com/target/lorri"><code>lorri</code></a>, <a href="https://github.com/xzfc/cached-nix-shell"><code>cached-nix-shell</code></a>, or my personal favorite, <a href="https://github.com/nix-community/nix-direnv"><code>nix-direnv</code></a>.</p>
+<p>See the point about Materialization above, and/or consider using <a href="https://github.com/target/lorri"><code>lorri</code></a>, <a href="https://github.com/xzfc/cached-nix-shell"><code>cached-nix-shell</code></a>, or my personal favorite, <a href="https://github.com/nix-community/nix-direnv"><code>nix-direnv</code></a>. Nix flakes also helps out here.</p>
 <h3 id="i-get-warnings-when-i-build-the-projectenter-my-nix-shell">I get warnings when I build the project/enter my <code>nix-shell</code>!</h3>
 <p>This is also related to materialization, if you properly configure materialization the warnings will disappear. You can safely ignore these warnings, though, and I usually don’t bother.</p>
 <h3 id="why-is-ci-building-ghc">Why is CI building GHC?</h3>
@@ -195,6 +198,7 @@
 <li id="fn1" role="doc-endnote"><p>Actually applies to every language<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2" role="doc-endnote"><p><code>hlint</code> and <code>ghcid</code> are somewhat obviated by HLS, but I like having them around for CI and running tests, respectively.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3" role="doc-endnote"><p>If you want to start from scratch you might need to copy and paste some Nix from the Haskell.nix manual.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>it’s been upcoming for a long time.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 <div class="header">
