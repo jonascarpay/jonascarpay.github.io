@@ -158,7 +158,7 @@
 <p>Two examples from my own config:</p>
 <ol type="1">
 <li><p>I want to add secret binary caches, but the <code>nix.binaryCaches</code> option only takes strings, it does not take file paths. That means there is no way of using the option without it ending up in the nix store. So, I sidestep the usual cache declaration mechanism and <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L4">go through <code>nix.extraOptions</code> and the new <code>!include</code> directive</a>.</p></li>
-<li><p>AWS credentials aren’t configured through nix, it relies on a file being present in a designated location in your root/user folder. So, we just override the so it <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L8">writes to <code>/root/.aws/credentials</code> directly</a>.</p></li>
+<li><p>AWS credentials aren’t configured through nix, it relies on a file being present in a designated location in your root/user folder. So, we just override the target path so it <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L8">writes to <code>/root/.aws/credentials</code> directly</a>.</p></li>
 </ol>
 <p>The takeaway is that sometimes it just requires some creativity, but it is not unimaginable that you have secrets for which <code>agenix</code> just does not work out. As far as I know this is mostly just an issue with nix itself, and applies to all secret management solutions.</p>
 <h4 id="some-thoughts-on-security">Some thoughts on security</h4>
