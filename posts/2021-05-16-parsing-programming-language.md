@@ -130,24 +130,12 @@ I recommend trying it out, it's a much less committal choice than choosing wheth
 
 It's very simple to use; similar to `happy` you just add `build-tool-depends: alex:alex` to your `.cabal` file, and you can now use `.x` files as normal Haskell modules.
 It ships with a few "wrappers", which provide the glue code between the generated code and the rest of your project.
-These wrappers can be somewhat annoying to use, but fortunately, it's actually really easy to just write the glue code yourself.
 
-It requires only two definitions (the `AlexInput` type and `alexGetByte` function), and gives you more control over performance and source position tracking.
-From there, you just stream the result of the `alexScan` function, and you're good.
-For illustration, this is the code that I ended up using.
-It operates on raw `ByteString`s, and gives you line and column numbers per token.
+These wrappers might not actually cover your exact needs, but fortunately, it's actually really easy to just write the glue code yourself.
+It requires you to provide two definitions (the `AlexInput` type and `alexGetByte` function), and gives you more control over performance and source position tracking.
+I recommend taking a look at the [source code for the wrappers `alex` ships with](https://github.com/simonmar/alex/blob/master/data/AlexWrappers.hs), and adapting them to your needs.
 
-```haskell
-data AlexInput = AlexInput ByteString Int Int
-
-alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte (AlexInput bs line col)
-  | BS.null bs = Nothing
-  | otherwise = Just $
-      let b = BS.unsafeHead bs
-          (line', col') = if isNewLine b then (line + 1, 0) else (line, col + 1)
-       in (b, AlexInput (BS.unsafeTail bs) line' col')
-```
+From there, you just stream the result of the generated `alexScan` function, and you're good.
 
 ## What parser combinator library to use
 
@@ -182,7 +170,7 @@ The advantage is that you get a lot of fine-grained control over performance and
 For example, in my case, I store my tokens in a vector, so the parser state consists of just an index into that vector.
 This makes it fast, since your streaming logic is just incrementing that integer.
 The `Alternative` instance _always_ backtracks, but to still get good error messages it maintains the messages of whatever branch made the most progress while parsing.
-All in all, it's about 40 lines of code, yet it's almost _three_ times as fast as the original all-`megaparsec` parser.
+All in all, it's about 40 lines of code, yet it's almost _three_ times as fast as the old all-`megaparsec` non-tokenized parser.
 
 ## Conclusion
 
