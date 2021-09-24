@@ -17,69 +17,6 @@
     div.column{display: inline-block; vertical-align: top; width: 50%;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
-    pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-    pre > code.sourceCode > span:empty { height: 1.2em; }
-    .sourceCode { overflow: visible; }
-    code.sourceCode > span { color: inherit; text-decoration: inherit; }
-    div.sourceCode { margin: 1em 0; }
-    pre.sourceCode { margin: 0; }
-    @media screen {
-    div.sourceCode { overflow: auto; }
-    }
-    @media print {
-    pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-    }
-    pre.numberSource code
-      { counter-reset: source-line 0; }
-    pre.numberSource code > span
-      { position: relative; left: -4em; counter-increment: source-line; }
-    pre.numberSource code > span > a:first-child::before
-      { content: counter(source-line);
-        position: relative; left: -1em; text-align: right; vertical-align: baseline;
-        border: none; display: inline-block;
-        -webkit-touch-callout: none; -webkit-user-select: none;
-        -khtml-user-select: none; -moz-user-select: none;
-        -ms-user-select: none; user-select: none;
-        padding: 0 4px; width: 4em;
-        color: #aaaaaa;
-      }
-    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-    div.sourceCode
-      {   }
-    @media screen {
-    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-    }
-    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-    code span.at { color: #7d9029; } /* Attribute */
-    code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
-    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-    code span.ch { color: #4070a0; } /* Char */
-    code span.cn { color: #880000; } /* Constant */
-    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-    code span.dt { color: #902000; } /* DataType */
-    code span.dv { color: #40a070; } /* DecVal */
-    code span.er { color: #ff0000; font-weight: bold; } /* Error */
-    code span.ex { } /* Extension */
-    code span.fl { color: #40a070; } /* Float */
-    code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
-    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-    code span.op { color: #666666; } /* Operator */
-    code span.ot { color: #007020; } /* Other */
-    code span.pp { color: #bc7a00; } /* Preprocessor */
-    code span.sc { color: #4070a0; } /* SpecialChar */
-    code span.ss { color: #bb6688; } /* SpecialString */
-    code span.st { color: #4070a0; } /* String */
-    code span.va { color: #19177c; } /* Variable */
-    code span.vs { color: #4070a0; } /* VerbatimString */
-    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="../style.css" />
@@ -135,17 +72,11 @@ expecting &#39;)&#39;, operator, or the rest of expression</code></pre>
 <h3 id="how-to-tokenize">How to tokenize</h3>
 <p>You can easily write a tokenizer using any parser combinator library. As far as they’re concerned, it’s just another parser. However, if you’ve decided to do a separate tokenization pass anyway it might be worth looking into <a href="https://www.haskell.org/alex/"><code>alex</code></a>. <code>alex</code> allows you to write your token definitions with a regex-like syntax, and it will generate an optimized tokenizer from it. It is commonly used in conjunction with <code>happy</code>, but it can be used equally well just by itself.</p>
 <p><code>alex</code> is very flexible, and depending on how you use it, can be <em>stupid</em> fast. Besides performance guarantees, you also get some degree of static analysis on your tokens. I recommend trying it out, it’s a much less committal choice than choosing whether you’re using <code>happy</code> or not.</p>
-<p>It’s very simple to use; similar to <code>happy</code> you just add <code>build-tool-depends: alex:alex</code> to your <code>.cabal</code> file, and you can now use <code>.x</code> files as normal Haskell modules. It ships with a few “wrappers”, which provide the glue code between the generated code and the rest of your project. These wrappers can be somewhat annoying to use, but fortunately, it’s actually really easy to just write the glue code yourself.</p>
-<p>It requires only two definitions (the <code>AlexInput</code> type and <code>alexGetByte</code> function), and gives you more control over performance and source position tracking. From there, you just stream the result of the <code>alexScan</code> function, and you’re good. For illustration, this is the code that I ended up using. It operates on raw <code>ByteString</code>s, and gives you line and column numbers per token.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">AlexInput</span> <span class="ot">=</span> <span class="dt">AlexInput</span> <span class="dt">ByteString</span> <span class="dt">Int</span> <span class="dt">Int</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ot">alexGetByte ::</span> <span class="dt">AlexInput</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Word8</span>, <span class="dt">AlexInput</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>alexGetByte (<span class="dt">AlexInput</span> bs line col)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> BS.null bs <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Just</span> <span class="op">$</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="kw">let</span> b <span class="ot">=</span> BS.unsafeHead bs</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>          (line&#39;, col&#39;) <span class="ot">=</span> <span class="kw">if</span> isNewLine b <span class="kw">then</span> (line <span class="op">+</span> <span class="dv">1</span>, <span class="dv">0</span>) <span class="kw">else</span> (line, col <span class="op">+</span> <span class="dv">1</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">in</span> (b, <span class="dt">AlexInput</span> (BS.unsafeTail bs) line&#39; col&#39;)</span></code></pre></div>
+<p>It’s very simple to use; similar to <code>happy</code> you just add <code>build-tool-depends: alex:alex</code> to your <code>.cabal</code> file, and you can now use <code>.x</code> files as normal Haskell modules. It ships with a few “wrappers”, which provide the glue code between the generated code and the rest of your project.</p>
+<p>These wrappers might not actually cover your exact needs, but fortunately, it’s actually really easy to just write the glue code yourself. It requires you to provide two definitions (the <code>AlexInput</code> type and <code>alexGetByte</code> function), and gives you more control over performance and source position tracking. I recommend taking a look at the <a href="https://github.com/simonmar/alex/blob/master/data/AlexWrappers.hs">source code for the wrappers <code>alex</code> ships with</a>, and adapting them to your needs.</p>
+<p>From there, you just stream the result of the generated <code>alexScan</code> function, and you’re good.</p>
+<h4 id="character-encodings">Character encodings</h4>
+<p>One thing to note is that <code>alex</code> will always assume its input is UTF-8 encoded<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. If you don’t explicitly allow Unicode characters in your tokens this doesn’t affect you in any way, but if you want, you can use it to get Unicode support almost for free. First, in the token specification, add a line <code>$uniChar = [\192-\x10ffff]</code> and use that wherever Unicode characters are allowed. Then, in the Haskell parts, use <code>Data.Text.Encoding.decodeUTF8</code> to decode the <code>ByteString</code> chunks you receive from your tokenizer into <code>Text</code><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
 <h2 id="what-parser-combinator-library-to-use">What parser combinator library to use</h2>
 <p>At this point, you should have some idea of which of these three options you want:</p>
 <ul>
@@ -160,9 +91,16 @@ expecting &#39;)&#39;, operator, or the rest of expression</code></pre>
 <p>This is where things get interesting.</p>
 <p>You can obviously use any parser combinator library that supports custom input streams. From the ones I know, I find that <code>parsec</code> is actually best at this. <code>megaparsec</code> can do it too, but its interfaces really emphasize non-tokenized inputs, which can make it a bit unwieldy.</p>
 <p>If you’re not already using either of those for tokenizing, however, I think it’s worth considering writing a parser combinator library yourself. They’re really simple, the code it takes to write them is barely longer than the code it would take to integrate an existing parser. The advantage is that you get a lot of fine-grained control over performance and error-handling.</p>
-<p>For example, in my case, I store my tokens in a vector, so the parser state consists of just an index into that vector. This makes it fast, since your streaming logic is just incrementing that integer. The <code>Alternative</code> instance <em>always</em> backtracks, but to still get good error messages it maintains the messages of whatever branch made the most progress while parsing. All in all, it’s about 40 lines of code, yet it’s almost <em>three</em> times as fast as the original all-<code>megaparsec</code> parser.</p>
+<p>For example, in my case, I store my tokens in a vector, so the parser state consists of just an index into that vector. This makes it fast, since your streaming logic is just incrementing that integer. The <code>Alternative</code> instance <em>always</em> backtracks, but to still get good error messages it maintains the messages of whatever branch made the most progress while parsing. All in all, it’s about 40 lines of code, yet it’s almost <em>three</em> times as fast as the old all-<code>megaparsec</code> non-tokenized parser.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>It’s interesting to see how different approaches to parsing “scale up”. For most simple parse jobs, you really don’t need much more than a simple parser combinator library. For more complex grammars, I recommend tokenizing and then running either <code>happy</code> or some sort of custom parser on top. Ultimately, it depends on the project and its requirements, but this should at least have given you some idea of the options you have available.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>Technically you can change this by <a href="https://www.haskell.org/alex/doc/html/api.html#encoding">passing the <code>--latin1</code> option</a>, but similar to <code>happy</code>’s algorithm options, <code>cabal</code> doesn’t actually allow you to configure this.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>In general, I recommend you always use <code>Text</code> to represent your identifiers and strings internally. The first benefit is that it the <code>Text</code> API takes care of all encoding-related matters. The second benefit is that <code>Text</code>, like most Haskell values, and in contrast to <code>ByteString</code>, lives in <em>unpinned</em> memory. A full discussion is out of scope for this article, let alone this footnote, but in brief, <em>unpinned</em> means that the garbage collector is able to move it around as it sees fit. Pinning is good if you have few, long pieces of data that are involved in FFI, but since none of those apply here, you want an unpinned data type.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
 <div class="header">
 	<a href="../index.html">&larr; Back</a>
 </div>
