@@ -137,6 +137,21 @@ I recommend taking a look at the [source code for the wrappers `alex` ships with
 
 From there, you just stream the result of the generated `alexScan` function, and you're good.
 
+#### Character encodings
+
+One thing to note is that `alex` will always assume its input is UTF-8 encoded[^encoding].
+If you don't explicitly allow Unicode characters in your tokens this doesn't affect you in any way, but if you want, you can use it to get Unicode support almost for free.
+First, in the token specification, add a line `$uniChar = [\192-\x10ffff]` and use that wherever Unicode characters are allowed.
+Then, in the Haskell parts, use `Data.Text.Encoding.decodeUTF8` to decode the `ByteString` chunks you receive from your tokenizer into `Text`[^text].
+
+[^encoding]: Technically you can change this by [passing the `--latin1` option](https://www.haskell.org/alex/doc/html/api.html#encoding), but similar to `happy`'s algorithm options, `cabal` doesn't actually allow you to configure this.
+
+[^text]: In general, I recommend you always use `Text` to represent your identifiers and strings internally.
+The first benefit is that it the `Text` API takes care of all encoding-related matters.
+The second benefit is that `Text`, like most Haskell values, and in contrast to `ByteString`, lives in _unpinned_ memory.
+A full discussion is out of scope for this article, let alone this footnote, but in brief, _unpinned_ means that the garbage collector is able to move it around as it sees fit.
+Pinning is good if you have few, long pieces of data that are involved in FFI, but since none of those apply here, you want an unpinned data type.
+
 ## What parser combinator library to use
 
 At this point, you should have some idea of which of these three options you want:
