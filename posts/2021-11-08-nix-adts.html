@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+  <meta name="dcterms.date" content="2021-11-08" />
+  <title>Algebraic Data Types and Pattern Matching in Nix</title>
+  <meta property="og:title" content="Algebraic Data Types and Pattern Matching in Nix" />
+  <meta property="twitter:title" content="Algebraic Data Types and Pattern Matching in Nix" />
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+</head>
+<body>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Algebraic Data Types and Pattern Matching in Nix</h1>
+<p class="date">2021-11-08</p>
+</header>
+<p>Algebraic data types (ADT’s) are the kind of programming language feature that is hard to live without once you’ve gotten used to it. Unfortunately, Nix ostensibly <em>does</em> force you to live without ADT’s, but let’s see if we can add them back in.</p>
+<p>In this post, I will show you three ways of emulating ADT’s, and when to choose which. This post was inspired by my work on <a href="https://github.com/purenix-org/purenix">PureNix</a>, and aims to explain why pattern matching is implemented the way it is.</p>
+<p>This snippet of Haskell/PureScript code will serve as the basis of our discussion for now:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">These</span> a b</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">This</span> a</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">That</span> b</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">These</span> a b</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ot">foo ::</span> <span class="dt">These</span> <span class="dt">Int</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>foo (<span class="dt">This</span> a) <span class="ot">=</span> a <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>foo (<span class="dt">That</span> b) <span class="ot">=</span> <span class="kw">if</span> b <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">then</span> b <span class="kw">else</span> <span class="dv">0</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>foo (<span class="dt">These</span> a b) <span class="ot">=</span> a <span class="op">*</span> b</span></code></pre></div>
+<h2 id="naive-tagged-unions">Naive tagged unions</h2>
+<p>The most natural and common encoding of an ADT is as what’s often called a tagged union. In Nix, that would mean an attribute set of</p>
+<ul>
+<li>a string tag allowing us to discriminate the constructor</li>
+<li>the fields of that constructor.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  This  = a:    { tag = <span class="st">&quot;This&quot;</span>;  field0 = a; };</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  That  = b:    { tag = <span class="st">&quot;That&quot;</span>;  field0 = b; };</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  These = a: b: { tag = <span class="st">&quot;These&quot;</span>; field0 = a; field1 = b; };</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  foo = x:</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> x.tag == <span class="st">&quot;This&quot;</span> <span class="kw">then</span> x.field0 + <span class="dv">1</span> <span class="kw">else</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> x.tag == <span class="st">&quot;That&quot;</span> <span class="kw">then</span> <span class="kw">if</span> x.field0 &gt; <span class="dv">0</span> <span class="kw">then</span> x.field0 <span class="kw">else</span> <span class="dv">0</span> <span class="kw">else</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> x.tag == <span class="st">&quot;These&quot;</span> <span class="kw">then</span> x.field0 * x.field1 <span class="kw">else</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">builtins</span>.throw <span class="st">&quot;pattern match error&quot;</span>;</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>And sure, this <em>technically</em> is a correct implementation of the Haskell code, but it’s not exactly elegant or ergonomic. The pattern matching in particular is hard to read, hard to write, and doesn’t compose very nicely either. Imagine that we’re writing a library, and <em>this</em> is how we ask users to pattern match on the data that we supply them? Yuk.</p>
+<p>Fortunately, we can do better.</p>
+<h2 id="attribute-sets-of-continuations">Attribute sets of continuations</h2>
+<p>The crucial insight is that Nix’s attribute sets are actually much more suitable for encoding <em>pattern matching</em> than they are for encoding <em>constructors</em>. With the perspective that pattern matches are attribute sets of continuations, constructors simply become the inverse – field selectors and applications. It’s wonderful dualities like these that make functional programmers fancy themselves mystics.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  This  = a:    match: match.This a;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  That  = b:    match: match.That b;</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  These = a: b: match: match.These a b;</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  foo = x: x {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    This  = a: a + <span class="dv">1</span>;</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    That  = b: <span class="kw">if</span> b &gt; <span class="dv">0</span> <span class="kw">then</span> b <span class="kw">else</span> <span class="dv">0</span>;</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    These = a: b: a * b;</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  };</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p><em>This</em> is how you want to emulate ADT’s and pattern matching in Nix. It’s readable, composes wonderfully, and even gives some pretty sensible errors if you make what would otherwise be a type error or pattern match failure. The general principle is the same as Church encoding, but by using attribute sets instead of lambda’s, we get named, unordered branches.</p>
+<p>But if this attribute set-based Church encoding is so great, why isn’t this how pattern matching works in PureNix?</p>
+<h2 id="tagged-unions-revisited">Tagged unions revisited</h2>
+<p>Up until now, this post has been about practical tips that you can apply when writing Nix code. From here on out however, things are going to be less practical (or at least, I hope that you don’t actually have to write code like this by hand). The goal is to explain and motivate the concepts behind the pattern matching implementation in PureNix.</p>
+<p>Languages with first-class support for pattern matching typically offer many more features than just individually matching on every constructor. In PureScript, a patterns can consist of literals, wildcards, ignores, as-patterns, guards, nested patterns, and tupled patterns. We could try to extend the continuation-based implementation above to support <em>some</em> of that, but when you want to support <em>all</em> of these features you end up sacrificing the things that made it so nice in the first place. So, let’s go back to the drawing board.</p>
+<p>Fundamentally, a pattern does two things;</p>
+<ul>
+<li>it checks whether certain conditions hold</li>
+<li>it introduces bindings.</li>
+</ul>
+<p>It can do these things multiple times and in any order, but ultimately it always reaches one of two outcomes:</p>
+<ul>
+<li>success, in which case we evaluate the body, with the binders in scope</li>
+<li>failure, in which case we try the next pattern.</li>
+</ul>
+<p>A full pattern match tries the given patterns <em>in order</em> and if none apply, it throws an error.</p>
+<p>Implementation-wise, we start by capturing a failure continuation, and from there it’s just a soup of <code>if</code>-expressions and <code>let</code>-bindings. Here is (a cleaned up version of) what PureNix actually outputs. For the ADT’s, we’re back to our initial naive tagged union implementation, but you can see how patterns are now named and composable:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  This  = value0:         { tag = <span class="st">&quot;This&quot;</span>;  field0 = value0; };</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  That  = value0:         { tag = <span class="st">&quot;That&quot;</span>;  field0 = value0; };</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  These = value0: value1: { tag = <span class="st">&quot;These&quot;</span>; field0 = value0; field1 = value1; };</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  foo = v:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      pattern0 = fail: <span class="kw">if</span> v.tag == <span class="st">&quot;This&quot;</span> <span class="kw">then</span> <span class="kw">let</span> a = v.field0; <span class="kw">in</span> a + <span class="dv">1</span> <span class="kw">else</span> fail;</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>      pattern1 = fail: <span class="kw">if</span> v.tag == <span class="st">&quot;That&quot;</span> <span class="kw">then</span> <span class="kw">let</span> b = v.field0; <span class="kw">in</span> <span class="kw">if</span> b &gt; <span class="dv">0</span> <span class="kw">then</span> b <span class="kw">else</span> <span class="dv">0</span> <span class="kw">else</span> fail;</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>      pattern2 = fail: <span class="kw">if</span> v.tag == <span class="st">&quot;These&quot;</span> <span class="kw">then</span> <span class="kw">let</span> a = v.field0; b = v.field1; <span class="kw">in</span> a * b <span class="kw">else</span> fail;</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>      patternFail = <span class="bu">builtins</span>.throw <span class="st">&quot;Pattern match failure in src/Main.purs at 16:1 - 16:28&quot;</span>;</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">in</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    pattern0 (pattern1 (pattern2 patternFail));</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Of course, this example doesn’t really show how we now support more complicated patterns than before. Let’s fix that:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bar ::</span> <span class="dt">These</span> (<span class="dt">These</span> <span class="dt">Int</span> <span class="dt">Int</span>) <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>bar (<span class="dt">These</span> a<span class="op">@</span>(<span class="dt">These</span> b _) c) <span class="op">|</span> b <span class="op">&gt;</span> c <span class="ot">=</span> foo a</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>bar _ <span class="ot">=</span> <span class="dv">0</span></span></code></pre></div>
+<p>This snippet compiles to:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>bar = v: </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    pattern0 = fail: </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      <span class="kw">if</span> v.tag == <span class="st">&quot;These&quot;</span> &amp;&amp; v.field0.tag == <span class="st">&quot;These&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">then</span> </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>          <span class="kw">let</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>            a = v.field0;</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>            b = v.field0.field0;</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>            c = v.field1;</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>          <span class="kw">in</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>            <span class="kw">if</span> b &gt; c <span class="kw">then</span> foo a <span class="kw">else</span> fail</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">else</span> fail;</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    pattern1 = fail: <span class="dv">0</span>;</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    patternFail = <span class="bu">builtins</span>.throw <span class="st">&quot;Pattern match failure in src/Main.purs at 21:1 - 21:40&quot;</span>;</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    pattern0 (pattern1 patternFail);</span></code></pre></div>
+<p>Here in <code>pattern0</code> we can see</p>
+<ul>
+<li>the interleaving of binding and checks</li>
+<li>how capturing the <code>fail</code> continuation allows us to fail in multiple places during the scrutinization of the pattern.</li>
+</ul>
+<h2 id="conclusions">Conclusions</h2>
+<p>In <a href="#attribute-sets-of-continuations">Section 2</a> we saw an elegant way of encoding ADT’s and pattern matching as attribute sets of continuations. It’s very readable, pleasant to work with, and works great for most cases. Unfortunately, it doesn’t actually have the power to emulate <em>all</em> of the pattern matching features you expect in a modern functional language.</p>
+<p>In that case, we instead define patterns one-by-one, and compose them by capturing a failure continuation. At this point, the code is not the kind of code you’d typically be happy writing by hand, but the ideas can still be useful in other contexts.</p>
+<p>Thanks for reading, I hope you got something out of it.</p>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<div class="footer">
+	<a href="https://github.com/jonascarpay/jonascarpay.github.io">Questions/suggestions on Github</a> -
+	<a href="https://jonascarpay.com/rss.xml">RSS</a> </br> </br>
+	Made with pandoc and duct tape.
+</div>
+</body>
+</html>
