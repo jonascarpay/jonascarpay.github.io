@@ -97,7 +97,7 @@
 <h1 class="title">Algebraic Data Types and Pattern Matching in Nix</h1>
 <p class="date">2021-11-08</p>
 </header>
-<p>Algebraic data types (ADT’s) are the kind of programming language feature that is hard to live without once you’ve gotten used to it. Unfortunately, Nix ostensibly <em>does</em> force you to live without ADT’s, but let’s see if we can add them back in.</p>
+<p>Algebraic data types (ADT’s) are the kind of programming language feature that is hard to live without once gotten used to. Unfortunately, Nix ostensibly <em>does</em> force you to live without ADT’s, but let’s see if we can add them back in.</p>
 <p>In this post, I will show you three ways of emulating ADT’s, and when to choose which. This post was inspired by my work on <a href="https://github.com/purenix-org/purenix">PureNix</a>, and aims to explain why pattern matching is implemented the way it is.</p>
 <p>This snippet of Haskell/PureScript code will serve as the basis of our discussion for now:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">These</span> a b</span>
