@@ -4,6 +4,15 @@
 		<link>https://jonascarpay.com</link>
 		<description>jonas's blog</description>
 		<item>
+			<title>Capturing non-determinism by salting derivations</title>
+			<link>https://jonascarpay.com/posts/2021-12-01-salt.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-12-01-salt.html</guid>
+			<description>
+				Adding a salt allows you to capture non-reproducibility, and make
+    poorly-behaved derivations nicer to work with.
+			</description>
+		</item>
+		<item>
 			<title>Algebraic Data Types and Pattern Matching in Nix</title>
 			<link>https://jonascarpay.com/posts/2021-11-08-nix-adts.html</link>
 			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-11-08-nix-adts.html</guid>
