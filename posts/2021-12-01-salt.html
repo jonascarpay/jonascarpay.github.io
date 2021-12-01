@@ -97,7 +97,7 @@
 <h1 class="title">Capturing non-determinism by salting derivations</h1>
 <p class="date">2021-12-01</p>
 </header>
-<p>This is a technique a coworker and I recently discovered, and it solved a problem we were having so elegantly that it’s hard not to write about.</p>
+<p>This is a technique <a href="https://github.com/considerate/">a coworker</a> and I recently discovered, and it solved a problem we were having so elegantly that it’s hard not to write about.</p>
 <p>At <code>$WORK</code>, our CI runs benchmarks inside Nix derivations. This works great for only running benchmarks when dependencies change, but there’s an issue: Nix tries really hard to make sure that a derivation is <em>deterministic</em>, i.e. produces the same output no matter where, when, or how it is evaluated. Timing-based benchmark results are inherently at odds with that promise.</p>
 <p>For our purposes here, the main problem is that the derivation output now depends on the machine it runs on. When we now want to run a benchmark on a specific computer, we instead get served the cached results from our CI machine, which has different hardware, and therefore gives unrepresentative benchmark results.</p>
 <p>Saying “the derivation output is dependent on the machine it is evaluated on” already hints at the solution: we need to make the host machine a dependency of/input to the derivation. To do so, we use <code>builtins.getEnv</code> and <code>--impure</code> to sneak in an environment variable, and make that an argument to <code>mkDerivation</code>:</p>
