@@ -79,7 +79,7 @@ Haskell.nix standardizes, streamlines, and automates the entire process, allowin
 ### Preliminary setup
 First, you need the [nix package manager](https://nixos.org/).
 
-Second, you need to set up the [IOHK binary cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/#setting-up-the-binary-cache).
+Second, you need to set up the [IOHK binary cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html#setting-up-the-binary-cache).
 _Technically_ this is optional, but if you don't you will build GHC from scratch, which takes... a while.
 
 ### A note on flakes
