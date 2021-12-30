@@ -112,7 +112,7 @@
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> shininess     ::</span> f <span class="dt">Float</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> mvpMatrices   ::</span> <span class="dt">MVP</span> f</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
-<p>The shaders (GPU code) are written in a different language, and we an only compile them manually at runtime. From this Haskell record, we then need to:</p>
+<p>The shaders (GPU code) are written in a different language, and we can only compile them manually at runtime. From this Haskell record, we then need to:</p>
 <ol type="1">
 <li>Reject types that the GPU does not support</li>
 <li>Match up these arguments to the shader code</li>
@@ -138,7 +138,7 @@
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  (view <span class="op">.</span> mvp)  <span class="op">$=</span> viewMat</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  drawMesh mesh</span></code></pre></div>
 <p>The point is this; a descriptor is an ordinary value, that you can have users provide about their data type. You can then use this value to do complicated things, in a type-safe manner, without the library ever having seen the original type, and without the user having to be aware of the machinery.</p>
-<p>What the descriptor ultimately looks like will depend on the application<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, but the principles stay the same. You might already be able to discern a lot by looking it how they’re used above, but let’s see how they work.</p>
+<p>What the descriptor ultimately looks like will depend on the application<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, but the principles stay the same. You might already be able to discern a lot by looking at how they’re used above, but let’s see how they work.</p>
 <h2 id="simple-descriptors">Simple Descriptors</h2>
 <p>Let’s say we’re writing a library that provides a way to ask for data on the command line. We expose a function that, given a label, parsing function, and verification function, asks for and yields a single value:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">ask ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
@@ -387,12 +387,12 @@
 	<a href="/index.html">&larr; Back</a>
 </div>
 <div class="footer">
-	<p>⚠️ I am looking for a new workplace! <a href="/hireme.html">click here for more info.</a> ⚠️</p>
+	<p>⚠️ I am looking for a new job! <a href="/hireme.html">click here for more info.</a> ⚠️</p>
 	<p>
 	  questions/suggestions go on
 		<a href="https://github.com/jonascarpay/jonascarpay.github.io">a github issue</a>,
 		<a href="https://twitter.com/jonascarpay">twitter</a>,
-		or the email address I use for my commits.
+		or <tt>&lt;my twitter handle&gt;@gmail.com</tt>.
 	</p>
 	<p>made with love, pandoc and duct tape.</p>
 	<p><a href="/rss.xml">RSS</a></p>
