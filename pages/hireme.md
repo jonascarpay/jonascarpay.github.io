@@ -1,12 +1,12 @@
 ---
-title: Hire me
+title: I'm available for hire!
 date: 2021-12-30
 ---
 
 I am looking for the next challenge in my career!
-Part-time, full-time, or even just contracting, if you're reading this and think we could work together, I want to talk to you.
-I am open-minded, and my only upfront requirement is that work is either remote, in the US, or in Japan (where I'm currently located).
-To contact me, send an email to my name `@gmail.com`.
+No matter what industry, part-time, full-time, or even just contracting -- if you're reading this and think we could work together, I want to talk to you.
+My only upfront requirement is that work is either remote, in the US, or here in Japan.
+To contact me, send an email to `<my twitter handle>@gmail.com`.
 
 My experience:
 

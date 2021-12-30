@@ -32,9 +32,7 @@ pandoc "pages/hireme.md" \
   -o "$out/hireme.html" \
   --standalone \
   -c style.css \
-  --include-before-body=static/back.html \
   --include-after-body=static/back.html \
-  --include-after-body=static/footer.html \
   --template=static/template.html5
 
 pandoc static/toc_header.html "$TMP/toc.html" \
