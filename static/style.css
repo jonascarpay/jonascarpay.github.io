@@ -38,3 +38,15 @@ div.sourceCode {
   font-size:60%;
   text-align: center;
 }
+
+@media (prefers-color-scheme: dark){
+  body {
+    background-color:#222;
+    color: #ddd;
+  }
+  a:link { color: #F08049; }
+  a:visited { color: #C2B5AE; }
+  .toc .title { color: #aaa; }
+  .sourceCode { color: #444; }
+  .taglist { color: #aaa; }
+}
