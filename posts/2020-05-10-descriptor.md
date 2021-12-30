@@ -39,7 +39,7 @@ data Blinn f = Blinn
   , mvpMatrices   :: MVP f
   }
 ```
-The shaders (GPU code) are written in a different language, and we an only compile them manually at runtime.
+The shaders (GPU code) are written in a different language, and we can only compile them manually at runtime.
 From this Haskell record, we then need to:
 
 1. Reject types that the GPU does not support
@@ -76,7 +76,7 @@ The point is this; a descriptor is an ordinary value, that you can have users pr
 You can then use this value to do complicated things, in a type-safe manner, without the library ever having seen the original type, and without the user having to be aware of the machinery.
 
 What the descriptor ultimately looks like will depend on the application[^blog], but the principles stay the same.
-You might already be able to discern a lot by looking it how they're used above, but let's see how they work.
+You might already be able to discern a lot by looking at how they're used above, but let's see how they work.
 
 [^blog]: Which is why this works better as a blog post than a library
 
