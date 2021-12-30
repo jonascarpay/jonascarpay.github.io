@@ -12,5 +12,10 @@
         builder = ./builder.sh;
       };
     in
-    { defaultPackage = blog; });
+    {
+      defaultPackage = blog;
+      defaultApp = pkgs.writeShellScriptBin "serve-blog" ''
+        ${pkgs.httplz}/bin/httplz ${blog}
+      '';
+    });
 }
