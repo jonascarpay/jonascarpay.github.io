@@ -7,9 +7,17 @@ body {
   color:#444
 }
 
-a:link    { text-decoration: none; }
-a:visited { text-decoration: none; }
-a:hover   { text-decoration: underline; }
+a:link    {
+  text-decoration: none;
+  color: #9C4325;
+}
+a:visited {
+  text-decoration: none;
+  color: #9C847C;
+}
+a:hover {
+  text-decoration: underline;
+}
 
 .subtitle { font-size: 150%; }
 .header   { font-size: 70%; }
@@ -45,8 +53,8 @@ div.sourceCode {
     background-color:#222;
     color: #ddd;
   }
-  a:link { color: #E0B73D; }
-  a:visited { color: #A68965; }
+  a:link { color: #EBBA34; }
+  a:visited { color: #BDB08D; }
   .toc .title { color: #aaa; }
   .sourceCode { color: #444; }
   .taglist { color: #aaa; }
