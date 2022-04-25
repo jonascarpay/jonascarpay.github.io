@@ -44,9 +44,9 @@
 <pre><code>git clone git@github.com:ekmett/semigroupoids
 cd semigroupoids</code></pre>
 <p>The way you generate HIE files is by compiling your project with <code>-fwrite-ide-info</code>. If you’re using Cabal, that looks like this:</p>
-<pre><code>cabal new-clean
-cabal new-build --ghc-options=-fwrite-ide-info</code></pre>
-<p>The <code>cabal new-clean</code> is there to force every module to be recompiled, because otherwise we won’t get any HIE files. It has the additional benefit of cleaning out any HIE files for modules that no longer exist.</p>
+<pre><code>cabal clean
+cabal build --ghc-options=-fwrite-ide-info</code></pre>
+<p>The <code>cabal clean</code> is there to force every module to be recompiled, because otherwise we won’t get any HIE files. It has the additional benefit of cleaning out any HIE files for modules that no longer exist.</p>
 <h2 id="drawing-graphs">Drawing graphs</h2>
 <p>If you’re in your project directory, have <code>calligraphy</code> and <code>dot</code> installed, and you compiled your project with <code>-fwrite-ide-info</code>, you should be all set to generate your first graph!</p>
 <pre><code>calligraphy -p out.png</code></pre>
