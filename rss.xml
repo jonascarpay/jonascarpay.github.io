@@ -4,6 +4,14 @@
 		<link>https://jonascarpay.com</link>
 		<description>jonas's blog</description>
 		<item>
+			<title>Calligraphy tutorial</title>
+			<link>https://jonascarpay.com/posts/2022-04-26-calligraphy-tutorial.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2022-04-26-calligraphy-tutorial.html</guid>
+			<description>
+				Tutorial for calligraphy, a Haskell source code visualizer.
+			</description>
+		</item>
+		<item>
 			<title>Capturing non-determinism by salting derivations</title>
 			<link>https://jonascarpay.com/posts/2021-12-01-salt.html</link>
 			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-12-01-salt.html</guid>

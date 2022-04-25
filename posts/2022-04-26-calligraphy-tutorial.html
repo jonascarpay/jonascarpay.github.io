@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+  <meta name="dcterms.date" content="2022-04-26" />
+  <title>Calligraphy tutorial</title>
+  <meta property="og:title" content="Calligraphy tutorial" />
+  <meta property="twitter:title" content="Calligraphy tutorial" />
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@jonascarpay" />
+</head>
+<body>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Calligraphy tutorial</h1>
+<p class="date">2022-04-26</p>
+</header>
+<p>Today, I released <a href="https://github.com/jonascarpay/calligraphy"><code>calligraphy</code></a>, a Haskell call graph/source code visualizer. In this post, I’ll walk you how to actually use it. Before we begin, I recommend scrolling through the article to get an idea of the kinds of graphs we’ll be creating.</p>
+<h1 id="first-strokes">First strokes</h1>
+<h2 id="installation">Installation</h2>
+<p>The first step is to install the <code>calligraphy</code> executable. I can’t really help you out here, you have to install it the way you install all Haskell applications. The big thing to look out for is that, like most Haskell tooling, the <code>calligraphy</code> executable <em>has to be compiled with the same version of GHC as the project you want to use it with</em>. If <code>calligraphy</code> starts throwing errors like <code>"The impossible happened!"</code>, it’s probably a version mismatch between <code>calligraphy</code> and GHC.</p>
+<p>The second step is to make sure you have <a href="https://graphviz.org/">GraphViz</a> installed. Calligraphy uses <code>dot</code> from the GraphViz package to render its graphs, make sure that is available in your search path. This should be pretty straightforward, GraphViz is typically readily available from your package manager.</p>
+<h2 id="hie-file-generation">HIE file generation</h2>
+<p>Next, we have to generate the HIE files <code>calligraphy</code> uses. To do so, we first need to pick a project and navigate to its directory. In these examples I’ll be working from the <a href="https://github.com/ekmett/semigroupoids">semigroupoids</a> package, so if you want to follow along, make sure to clone that.</p>
+<pre><code>git clone git@github.com:ekmett/semigroupoids
+cd semigroupoids</code></pre>
+<p>The way you generate HIE files is by compiling your project with <code>-fwrite-ide-info</code>. If you’re using Cabal, that looks like this:</p>
+<pre><code>cabal new-clean
+cabal new-build --ghc-options=-fwrite-ide-info</code></pre>
+<p>The <code>cabal new-clean</code> is there to force every module to be recompiled, because otherwise we won’t get any HIE files. It has the additional benefit of cleaning out any HIE files for modules that no longer exist.</p>
+<h2 id="drawing-graphs">Drawing graphs</h2>
+<p>If you’re in your project directory, have <code>calligraphy</code> and <code>dot</code> installed, and you compiled your project with <code>-fwrite-ide-info</code>, you should be all set to generate your first graph!</p>
+<pre><code>calligraphy -p out.png</code></pre>
+<p>This should have written a <code>out.png</code> file containing the full source graph of your project, and it should look something like this:</p>
+<p><a href="../assets/2022-04-26-calligraphy-tutorial/0_full.svg"><img src="../assets/2022-04-26-calligraphy-tutorial/0_full.svg" style="width:100.0%" alt="0_full.svg" /></a></p>
+<p>As you can see, graphs for your entire project tend to be a little too wide to be useful. So, let’s get to the fun part. In the second part of this tutorial, we’ll be taking a look at ways of taming project graphs.</p>
+<h1 id="calligraphy">Calligraphy</h1>
+<p>If you run <code>calligraphy --help</code>, you’ll see that <code>calligraphy</code> can be configured in many ways. Most of these are different ways of turning GraphViz spaghetti into useful, pretty graphs. The remainder of this tutorial is a guided tour through some of these options.</p>
+<h2 id="hiding">Hiding</h2>
+<p>Let’s start with the <code>--hide-*</code> flags.</p>
+<pre><code>calligraphy -p out.png --hide-data --hide-values --no-cluster-modules</code></pre>
+<p><a href="../assets/2022-04-26-calligraphy-tutorial/1_classes.svg"><img src="../assets/2022-04-26-calligraphy-tutorial/1_classes.svg" style="width:100.0%" alt="1_classes.svg" /></a></p>
+<p>Much nicer already. Hiding simply means that we don’t draw certain node types. In this case, hiding all value and data declarations leaves us with just the type class hierarchy. As you can see in the <code>--help</code>, hide flags exist for values, data, classes, and constructors. There are some subtleties to its exact behavior, which we’ll get into later.</p>
+<p>The <code>--no-cluster-modules</code> removes the border around individual modules, and gives GraphViz a slightly easier time with edge routing.</p>
+<h2 id="filtering-modules">Filtering modules</h2>
+<p>We can choose what modules we want to show by passing them as naked arguments on the command line:</p>
+<pre><code>calligraphy -p out.png Data.Functor.Alt Data.Functor.Plus</code></pre>
+<p><a href="../assets/2022-04-26-calligraphy-tutorial/2_alt_plus_full.svg"><img src="../assets/2022-04-26-calligraphy-tutorial/2_alt_plus_full.svg" style="width:100.0%" alt="2_alt_plus_full.svg" /></a></p>
+<p>Modules can be specified either as module names or file names, and they can include <code>*</code> wildcards. For example, you could render all of your tests using <code>calligraphy 'test/*'</code>, only modules in the <code>Data</code> namespace using <code>calligraphy 'Data.*'</code>, or any combination of these. We can also <em>exclude</em> certain modules using <code>--exclude</code>, which has the same syntax as choosing modules.</p>
+<h1 id="what-we-are-even-looking-at-in-the-first-place">What we are even looking at in the first place</h1>
+<p>What’s nice about the previous graph is that it actually contains every possible node- and edge type, so let’s go over what they are. First, nodes:</p>
+<ul>
+<li><strong>House shaped</strong> nodes are type classes</li>
+<li><strong>Octagons</strong> are type constructors/synonyms/families</li>
+<li><strong>Rectangles</strong> are constructors</li>
+<li><strong>Rounded rectangles</strong> are records</li>
+<li><strong>Ovals</strong> are ordinary values</li>
+<li>Nodes with a <strong>dashed outline</strong> are local bindings, i.e. not exported.</li>
+</ul>
+<p>As for edges,</p>
+<ul>
+<li><strong>Regular arrows</strong> mean that the thing at the end of the arrow was <em>used</em> in the body of the thing at the start of the arrow. For values, that usually just means that it’s an arrow from a caller to a callee, to the degree that that makes sense in Haskell. This usually captures the idea of a straightforward dependency nicely.</li>
+<li><strong>Dashed arrows</strong> go from a parent to its children, where a child is something that was <em>defined</em> in the body of the parent. Usually, the thing at the top is the parent and the thing at the bottom the child, but GraphViz might occasionally flip things, as is the case here with <code>many_v</code> being above <code>some</code>. If this causes issues, pass <code>--show-child-arrowhead</code>.</li>
+<li><strong>Dotted arrows</strong> are typing relationships. Put simply, the thing at the end of the arrow was mentioned in the type of the thing at the start of the arrow.</li>
+</ul>
+<h2 id="export-filtering">Export filtering</h2>
+<p>As mentioned before, dashed nodes are not exported. We can hide all non-exported bindings with <code>--exports-only</code>/<code>--hide-local-bindings</code>. This usually cleans up the graph nicely:</p>
+<pre><code>calligraphy -p out.png Data.Functor.Alt Data.Functor.Plus --exports-only</code></pre>
+<p><a href="../assets/2022-04-26-calligraphy-tutorial/3_alt_plus_exports.svg"><img src="../assets/2022-04-26-calligraphy-tutorial/3_alt_plus_exports.svg" alt="3_alt_plus_exports.svg" /></a></p>
+<p>If you look closely at the resulting graph you can see there’s an edge from <code>many</code> to <code>&lt;!&gt;</code> that wasn’t present in the original. The reason is that <em>hiding doesn’t simply remove the node</em>. Instead, it will try to merge the node into its parent, moving all edges up to the parent node.</p>
+<p>This applies to almost every method of removing nodes; they will all attempt to move edges to the parent instead of simply deleting them outright.</p>
+<h2 id="collapsing">Collapsing</h2>
+<p>So, what other method of removing nodes exist? Well, there’s also <em>collapsing</em>. Collapsing means that we don’t hide the node itself, we just hide all of its children. <code>--collapse-*</code> flags, like hide flags, exist for most node types. In this example we’ll collapse classes:</p>
+<pre><code>calligraphy -p out.png Data.Functor.Alt Data.Functor.Plus --exports-only --collapse-classes</code></pre>
+<p><a href="../assets/2022-04-26-calligraphy-tutorial/4_alt_plus_collapsed.svg"><img src="../assets/2022-04-26-calligraphy-tutorial/4_alt_plus_collapsed.svg" alt="4_alt_plus_collapsed.svg" /></a></p>
+<p>A bit extreme in this case, but very effective for cleaning up larger graphs.</p>
+<h2 id="transitive-dependencies">Transitive dependencies</h2>
+<p>Finally, let’s look at dependency filtering. Dependency filtering means that we only show things that are a (transitive) dependency of a given node. For example, these are all the things that <code>Traversable1</code> depends on:</p>
+<pre><code>calligraphy -p out.png --forward-root Traversable1</code></pre>
+<p><a href="../assets/2022-04-26-calligraphy-tutorial/5_transitive.svg"><img src="../assets/2022-04-26-calligraphy-tutorial/5_transitive.svg" style="width:100.0%" alt="5_transitive.svg" /></a></p>
+<p>You have some control over what a dependency means exactly. Using the <code>--[no-]follow-*</code> flags you can control what edges to follow when calculating a dependency graph. By default, it will follow normal edges, and parent/child edges in either direction. You can also limit the search depth using <code>--max-depth</code>.</p>
+<p>Finally, as implied by the fact that the flag is called <code>--forward-root</code>, you can also find <em>reverse</em> dependencies using <code>--reverse-root</code>.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>With that, we have covered the bulk of the option groups for calligraphy. You should now be ready to start using it with your own projects.</p>
+<p>If you have any questions or suggestions, either on this post or the <code>calligraphy</code> project itself, please don’t hesitate to reach out.</p>
+<div class="header">
+	<a href="../index.html">&larr; Back</a>
+</div>
+<div class="footer">
+	<p>⚠️ I am looking for a new job! <a href="/hireme.html">click here for more info.</a> ⚠️</p>
+	<p>
+	  questions/suggestions go on
+		<a href="https://github.com/jonascarpay/jonascarpay.github.io">a github issue</a>,
+		<a href="https://twitter.com/jonascarpay">twitter</a>,
+		or <tt>&lt;my twitter handle&gt;@gmail.com</tt>.
+	</p>
+	<p>made with love, pandoc and duct tape.</p>
+	<p><a href="/rss.xml">RSS</a></p>
+</div>
+</body>
+</html>
