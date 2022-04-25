@@ -7,6 +7,13 @@ body {
   color:#444
 }
 
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: auto;
+}
+
 a:link    {
   text-decoration: none;
   color: #9C4325;

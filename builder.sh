@@ -6,7 +6,7 @@ cd $src
 mkdir -p $out/posts
 TMP=${TMPDIR:-$(mktemp -d)}
 
-POSTS=$(find posts/ -type f | sort -r)
+POSTS=$(find posts/ -type f -name '*.md' | sort -r)
 
 for post in $POSTS; do
 
@@ -55,3 +55,4 @@ EOM
 
 cp static/style.css $out
 cp static/CNAME $out
+cp -r assets/ $out
