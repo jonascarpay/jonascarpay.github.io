@@ -37,10 +37,10 @@ The way you generate HIE files is by compiling your project with `-fwrite-ide-in
 If you're using Cabal, that looks like this:
 
 ```
-cabal new-clean
-cabal new-build --ghc-options=-fwrite-ide-info
+cabal clean
+cabal build --ghc-options=-fwrite-ide-info
 ```
-The `cabal new-clean` is there to force every module to be recompiled, because otherwise we won't get any HIE files.
+The `cabal clean` is there to force every module to be recompiled, because otherwise we won't get any HIE files.
 It has the additional benefit of cleaning out any HIE files for modules that no longer exist.
 
 ## Drawing graphs
