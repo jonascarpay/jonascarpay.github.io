@@ -6,7 +6,7 @@ abstract: Tutorial for calligraphy, a Haskell source code visualizer.
 ---
 
 Today, I released [`calligraphy`](https://github.com/jonascarpay/calligraphy), a Haskell call graph/source code visualizer.
-In this post, I'll walk you how to actually use it.
+In this post, I'll walk you through how to actually use it.
 Before we begin, I recommend scrolling through the article to get an idea of the kinds of graphs we'll be creating.
 
 # First strokes
@@ -40,8 +40,8 @@ If you're using Cabal, that looks like this:
 cabal clean
 cabal build --ghc-options=-fwrite-ide-info
 ```
-The `cabal clean` is there to force every module to be recompiled, because otherwise we won't get any HIE files.
-It has the additional benefit of cleaning out any HIE files for modules that no longer exist.
+You don't always need the `cabal clean`, it's there to just force every module to be recompiled, this time with `-fwrite-ide-info`.
+It does have the additional benefit of cleaning out any HIE files for modules that no longer exist.
 
 ## Drawing graphs
 
