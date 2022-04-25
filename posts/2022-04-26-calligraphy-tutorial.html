@@ -34,7 +34,7 @@
 <h1 class="title">Calligraphy tutorial</h1>
 <p class="date">2022-04-26</p>
 </header>
-<p>Today, I released <a href="https://github.com/jonascarpay/calligraphy"><code>calligraphy</code></a>, a Haskell call graph/source code visualizer. In this post, I’ll walk you how to actually use it. Before we begin, I recommend scrolling through the article to get an idea of the kinds of graphs we’ll be creating.</p>
+<p>Today, I released <a href="https://github.com/jonascarpay/calligraphy"><code>calligraphy</code></a>, a Haskell call graph/source code visualizer. In this post, I’ll walk you through how to actually use it. Before we begin, I recommend scrolling through the article to get an idea of the kinds of graphs we’ll be creating.</p>
 <h1 id="first-strokes">First strokes</h1>
 <h2 id="installation">Installation</h2>
 <p>The first step is to install the <code>calligraphy</code> executable. I can’t really help you out here, you have to install it the way you install all Haskell applications. The big thing to look out for is that, like most Haskell tooling, the <code>calligraphy</code> executable <em>has to be compiled with the same version of GHC as the project you want to use it with</em>. If <code>calligraphy</code> starts throwing errors like <code>"The impossible happened!"</code>, it’s probably a version mismatch between <code>calligraphy</code> and GHC.</p>
@@ -46,7 +46,7 @@ cd semigroupoids</code></pre>
 <p>The way you generate HIE files is by compiling your project with <code>-fwrite-ide-info</code>. If you’re using Cabal, that looks like this:</p>
 <pre><code>cabal clean
 cabal build --ghc-options=-fwrite-ide-info</code></pre>
-<p>The <code>cabal clean</code> is there to force every module to be recompiled, because otherwise we won’t get any HIE files. It has the additional benefit of cleaning out any HIE files for modules that no longer exist.</p>
+<p>You don’t always need the <code>cabal clean</code>, it’s there to just force every module to be recompiled, this time with <code>-fwrite-ide-info</code>. It does have the additional benefit of cleaning out any HIE files for modules that no longer exist.</p>
 <h2 id="drawing-graphs">Drawing graphs</h2>
 <p>If you’re in your project directory, have <code>calligraphy</code> and <code>dot</code> installed, and you compiled your project with <code>-fwrite-ide-info</code>, you should be all set to generate your first graph!</p>
 <pre><code>calligraphy -p out.png</code></pre>
