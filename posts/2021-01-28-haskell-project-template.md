@@ -193,7 +193,7 @@ If you then press tab, the completion shows you the available components.
 If you're like me, you probably just forgot to stage a file in git.
 
 ### Nix evaluation is slow!
-See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization/#materialization) or consider switching to flakes.
+See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization.html) or consider switching to flakes.
 
 ### The shell is slow!
 See the point about Materialization above, and/or consider using [`lorri`](https://github.com/target/lorri), [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell), or my personal favorite, [`nix-direnv`](https://github.com/nix-community/nix-direnv).
