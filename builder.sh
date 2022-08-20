@@ -8,6 +8,7 @@ TMP=${TMPDIR:-$(mktemp -d)}
 
 POSTS=$(find posts/ -type f -name '*.md' | sort -r)
 
+# TOC needs to be opt-out, unfortunately
 for post in $POSTS; do
 
   URL="${post%.md}.html"
@@ -15,6 +16,7 @@ for post in $POSTS; do
   pandoc "$post" \
     -o "$out/$URL" \
     --standalone \
+    --toc \
     --syntax-definition=static/nix-syntax.xml \
     -c ../style.css \
     --include-before-body=static/back.html \
