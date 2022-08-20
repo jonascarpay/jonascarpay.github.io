@@ -97,6 +97,42 @@
 <h1 class="title">The working programmer’s guide to setting up Haskell projects</h1>
 <p class="date">2021-01-28</p>
 </header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#the-goal">The goal</a>
+<ul>
+<li><a href="#no-global-state">No global state</a></li>
+<li><a href="#modern-tooling">Modern tooling</a></li>
+<li><a href="#minimal-configuration">Minimal configuration</a></li>
+</ul></li>
+<li><a href="#the-solution">The solution</a>
+<ul>
+<li><a href="#why-not-just-use">Why not just use…</a></li>
+</ul></li>
+<li><a href="#setup">Setup</a>
+<ul>
+<li><a href="#preliminary-setup">Preliminary setup</a></li>
+<li><a href="#a-note-on-flakes">A note on flakes</a></li>
+<li><a href="#project-setup">Project setup</a></li>
+</ul></li>
+<li><a href="#adding-files-to-your-project">Adding files to your project</a></li>
+<li><a href="#building">Building</a>
+<ul>
+<li><a href="#building-with-nix-cabal">Building with Nix + Cabal</a></li>
+<li><a href="#building-with-nix">Building with Nix</a></li>
+</ul></li>
+<li><a href="#troubleshooting">Troubleshooting</a>
+<ul>
+<li><a href="#something-doesnt-work">Something doesn’t work</a></li>
+<li><a href="#nix-evaluation-is-slow">Nix evaluation is slow!</a></li>
+<li><a href="#the-shell-is-slow">The shell is slow!</a></li>
+<li><a href="#i-get-warnings-when-i-build-the-projectenter-my-nix-shell">I get warnings when I build the project/enter my <code>nix-shell</code>!</a></li>
+<li><a href="#why-is-ci-building-ghc">Why is CI building GHC?</a></li>
+<li><a href="#i-cannot-rebuild-without-a-network-connection">I cannot rebuild without a network connection?</a></li>
+</ul></li>
+</ul>
+<hr />
+</nav>
 <p><strong>tl;dr:</strong> Nothing beats Haskell.nix for features and flexibility. To get started quickly, use the <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a> project template.</p>
 <hr />
 <p>If you’ve ever tried to set up a Haskell project, you know that it can be extremely frustrating to get to a point where everything just werks<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Of course, just compiling a project is not <em>that</em> hard, it’s when you have multiple projects, spanning multiple compiler versions, all requiring tooling compiled with the right GHC version, that things quickly turn into a mess. In this post I will outline what I think is currently the best way of setting up a Haskell project.</p>

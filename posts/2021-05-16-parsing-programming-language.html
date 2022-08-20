@@ -34,6 +34,29 @@
 <h1 class="title">Parsing a programming language</h1>
 <p class="date">2021-05-16</p>
 </header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#parser-combinators-vs.-parser-generators">Parser combinators vs. parser generators</a>
+<ul>
+<li><a href="#static-analysis">Static analysis</a></li>
+<li><a href="#integration">Integration</a></li>
+<li><a href="#error-handling">Error handling</a></li>
+</ul></li>
+<li><a href="#lexical-analysistokenization">Lexical analysis/tokenization</a>
+<ul>
+<li><a href="#the-case-against-tokenization">The case against tokenization</a></li>
+<li><a href="#the-case-for-tokenization">The case for tokenization</a></li>
+<li><a href="#how-to-tokenize">How to tokenize</a></li>
+</ul></li>
+<li><a href="#what-parser-combinator-library-to-use">What parser combinator library to use</a>
+<ul>
+<li><a href="#parser-combinators-all-the-way-down">Parser combinators all the way down</a></li>
+<li><a href="#tokenizing-parser-combinators">Tokenizing + parser combinators</a></li>
+</ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+<hr />
+</nav>
 <p>Choosing a parsing library in Haskell can be tough. I recently rewrote the parser for my programming language’s fairly complicated grammar, first from <a href="https://hackage.haskell.org/package/megaparsec"><code>megaparsec</code></a> to <a href="https://hackage.haskell.org/package/happy"><code>happy</code></a>, and then from <code>happy</code> to a custom solution. So, I had the pleasure of reimplementing the same grammar three times, in three very different systems. Here are some of the things I learned from that experience.</p>
 <p>This post is not about how you write your first parser, but rather about what things to consider when writing a more complicated parser.</p>
 <h2 id="parser-combinators-vs.-parser-generators">Parser combinators vs. parser generators</h2>

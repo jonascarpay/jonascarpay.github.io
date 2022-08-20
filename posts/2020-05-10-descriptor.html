@@ -97,6 +97,25 @@
 <h1 class="title">The Descriptor</h1>
 <p class="date">2020-05-10</p>
 </header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#motivating-example">Motivating example</a></li>
+<li><a href="#simple-descriptors">Simple Descriptors</a></li>
+<li><a href="#descriptors-with-higher-kinded-data">Descriptors with Higher-Kinded Data</a>
+<ul>
+<li><a href="#hkd-type-classes">HKD type classes</a></li>
+</ul></li>
+<li><a href="#structs-and-ffi">Structs and FFI</a>
+<ul>
+<li><a href="#updating-a-single-field">Updating a single field</a></li>
+<li><a href="#constructing-the-sptr">Constructing the <code>SPtr</code></a></li>
+<li><a href="#nested-structs">Nested structs</a></li>
+<li><a href="#arrays">Arrays</a></li>
+</ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+<hr />
+</nav>
 <p>One of my eventual goals with this blog is a post, or series of posts self-importantly titled <em>Effective Haskell</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. It’s a response to the recent <a href="https://www.simplehaskell.org/">Simple</a>/<a href="https://www.snoyman.com/blog/2019/11/boring-haskell-manifesto">Boring</a>/<a href="https://www.parsonsmatt.org/2019/12/26/write_junior_code.html">Junior</a> Haskell movement. It’s true that when writing Haskell in production, you need to be cautious not to accrue accidental complexity. My issue with the argument is the implication that we’re giving something up. Instead, I’d argue that using “advanced” features like GADTs, Type Families and even type classes is often unnecessary in the first place<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, and a failure to find a simpler solution.</p>
 <p>I’m not sure if I’ll ever actually finish a single post in <em>Effective Haskell</em>, but what I’m going to do in the meantime is use this blog to collect examples of what I think would classify as Effective Haskell.</p>
 <p>In this inaugural post, we will be studying a technique (ostensibly) for iterating over record fields and adding metadata to them, without using Template Haskell or Generics. I’m calling it a <em><a href="https://en.wikipedia.org/wiki/Data_descriptor">descriptor</a></em> because that’s what it reminds me of, but if somebody else has named it before, or just knows a more fitting name, please let me know.</p>

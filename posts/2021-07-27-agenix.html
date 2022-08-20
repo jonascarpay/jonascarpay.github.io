@@ -97,6 +97,14 @@
 <h1 class="title">Managing secrets with <code>agenix</code></h1>
 <p class="date">2021-07-27</p>
 </header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#nixos-configuration">NixOS configuration</a></li>
+<li><a href="#working-with-secrets">Working with secrets</a></li>
+<li><a href="#caveats">Caveats</a></li>
+</ul>
+<hr />
+</nav>
 <p>It’s considered bad practice to put sensitive information into your Nix configuration unencrypted. The primary concern is that anything Nix touches ends up in the Nix store, and the store is readable to every process and user on your computer. The second concern is that your configuration files themselves are now sensitive, so you can’t share them on GitHub or other public channels. So, how <em>do</em> you effectively manage your secrets? There are actually <a href="https://nixos.wiki/wiki/Comparison_of_secret_managing_schemes">many</a> proposed solutions to this issue, but I have generally found them to not be worth the hassle, and instead just always set them up manually. That is, until I discovered <a href="https://github.com/ryantm/agenix"><code>agenix</code></a>.</p>
 <p><code>agenix</code> requires almost no setup or overhead, and yet works seamlessly across multiple machines and users. We use it at <code>$work</code>, I <a href="https://github.com/jonascarpay/nix/tree/master/secrets">use it in my personal config</a>, and I have been very happy with it.</p>
 <p>Unfortunately, I find that <a href="https://github.com/ryantm/agenix#readme">the manual</a> makes <code>agenix</code> seem more complicated than it is, and doesn’t really highlight what makes it so nice to use. So, here is <del>more evangelism for niche technologies</del> a brief, opinionated guide to <code>agenix</code>.</p>

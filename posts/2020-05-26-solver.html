@@ -97,6 +97,28 @@
 <h1 class="title">Monoidal Puzzle Solving</h1>
 <p class="date">2020-05-26</p>
 </header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#the-solver">The Solver</a>
+<ul>
+<li><a href="#n-queens"><span class="math inline"><em>n</em></span> Queens</a></li>
+</ul></li>
+<li><a href="#sudoku">Sudoku</a>
+<ul>
+<li><a href="#anti-knight-sudoku">Anti-Knight Sudoku</a></li>
+<li><a href="#miracle-sudoku">Miracle Sudoku</a></li>
+</ul></li>
+<li><a href="#a-few-other-puzzles">A Few Other Puzzles</a>
+<ul>
+<li><a href="#n-queens-bishops-and-rooks"><span class="math inline"><em>n</em></span> Queens, Bishops, and Rooks</a></li>
+<li><a href="#nti-knight-queens"><span class="math inline"><em>n</em></span>ti-knight Queens</a></li>
+<li><a href="#star-battle">Star Battle</a></li>
+</ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#appendix-omitted-code">Appendix: Omitted Code</a></li>
+</ul>
+<hr />
+</nav>
 <p>Judging by the recent surge in popularity of the excellent <a href="https://www.youtube.com/channel/UCC-UOdK8-mIjxBQm_ot1T-Q">Cracking the Cryptic YouTube channel</a>, I’m not the only person for who recent circumstances have led them to rediscover logic puzzles. There is an entire art to hand-crafting these Puzzles that I never appreciated, complete with world-famous “setters”, and it makes for a perfect nerdy rabbit hole for people suddenly spending a lot of time inside. There are classic puzzles, like the Sudoku, but things become especially interesting when you start playing with the rule set. For example, you might have seen the viral <a href="https://www.youtube.com/watch?v=yKf9aUIxdb4">“Miracle Sudoku”</a> that has only 2 given digits (on which more later).</p>
 <p>The same goes for writing solvers: writing a Sudoku solver is trivial, but can we make one in which we can easily play with the rules? Designing an interesting puzzle becomes a lot easier if you can freely experiment with rules while making sure that you still have a unique solution.</p>
 <p>It turns out you can, and it’s a great exercise in higher-order functions and composition. So, in this post, we’re going to write a solver.</p>
