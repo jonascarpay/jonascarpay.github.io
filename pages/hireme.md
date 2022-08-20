@@ -4,8 +4,7 @@ date: 2022-08-20
 ---
 
 I am looking for the next challenge in my career!
-No matter what industry, part-time, full-time, or even just contracting -- if you're reading this and think we could work together, I want to talk to you.
-My only upfront requirement is that work is either remote, in the US, or here in Japan.
+No matter what industry, remote or on-site, part-time, full-time, or even just contracting -- if you're reading this and think we could work together, I want to talk to you.
 To contact me, send an email to `<my twitter handle>@gmail.com`.
 
 My experience:
