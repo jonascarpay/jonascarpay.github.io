@@ -1,6 +1,10 @@
-name: CI
+name: Build and deploy pages
 
-on: push
+# https://stackoverflow.com/questions/58139406/only-run-job-on-specific-branch-with-github-actions
+on:
+  push:
+    branches:
+      - master
 
 jobs:
 
