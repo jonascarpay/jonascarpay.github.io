@@ -60,6 +60,13 @@ div.sourceCode {
     background-color:#222;
     color: #ddd;
   }
+  div.sourceCode {
+    background-color:#333;
+  }
+  code.sourceCode > span { color: #ddd; }
+  code span.ot { color: #294; }
+  code span.kw { color: #294; }
+  code span.fu { color: #46689e; }
   a:link { color: #EBBA34; }
   a:visited { color: #BDB08D; }
   .toc .title { color: #aaa; }
