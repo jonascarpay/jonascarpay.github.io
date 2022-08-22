@@ -17,6 +17,8 @@ for post in $POSTS; do
     -o "$out/$URL" \
     --standalone \
     --toc \
+    --toc-depth 2 \
+    --number-sections \
     --syntax-definition=static/nix-syntax.xml \
     -c ../style.css \
     --include-before-body=static/back.html \

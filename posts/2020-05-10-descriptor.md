@@ -22,7 +22,7 @@ I'm not sure if I'll ever actually finish a single post in _Effective Haskell_, 
 In this inaugural post, we will be studying a technique (ostensibly) for iterating over record fields and adding metadata to them, without using Template Haskell or Generics.
 I'm calling it a _[descriptor](https://en.wikipedia.org/wiki/Data_descriptor)_ because that's what it reminds me of, but if somebody else has named it before, or just knows a more fitting name, please let me know.
 
-## Motivating example
+# Motivating example
 
 Our initial motivating example is from where I initially stumbled into this technique.
 
@@ -80,7 +80,7 @@ You might already be able to discern a lot by looking at how they're used above,
 
 [^blog]: Which is why this works better as a blog post than a library
 
-## Simple Descriptors
+# Simple Descriptors
 
 Let's say we're writing a library that provides a way to ask for data on the command line.
 We expose a function that, given a label, parsing function, and verification function, asks for and yields a single value:
@@ -185,7 +185,7 @@ descNonsense _ = pure $ Person "太郎" 3
 
 All of that is solved when we use _Higher-Kinded Data (HKD)_, which is where this technique really comes into its own.
 
-## Descriptors with Higher-Kinded Data
+# Descriptors with Higher-Kinded Data
 
 [Higher-Kinded Data](https://reasonablypolymorphic.com/blog/higher-kinded-data/) is a pattern where you parameterize record fields over some functor, like this:
 
@@ -252,7 +252,7 @@ hParseCheck desc s = runIdentity $ desc $ \f _ parse check -> pure $
     _ -> Nothing
 ```
 
-### HKD type classes
+## HKD type classes
 
 When you use HKD, you typically want to be able to `map`/`traverse`/`<*>` the fields of your record.
 There are libraries like [`higgledy`](https://hackage.haskell.org/package/higgledy), [`barbies`](https://hackage.haskell.org/package/barbies), [`barbies-th`](https://hackage.haskell.org/package/barbies-th), or [`hkd`](https://hackage.haskell.org/package/hkd) that help you derive the required instances (and other nice things).
@@ -282,7 +282,7 @@ dliftA2 desc fn sf sg = runIdentity $
 This doesn't necessarily mean that descriptors compete with the libraries above.
 The actual use cases are different, descriptors work best when you have to provide an interface to library users and don't want to force them to use Template Haskell, Generics, or dependencies.
 
-## Structs and FFI
+# Structs and FFI
 
 Briefly, before we continue: every record field accessor of an HKD has type `forall f. s f -> f a`.
 To avoid having to quantify the `f` every time, we're going to assign it a type signature:
@@ -291,7 +291,7 @@ type Field s a = forall f. s f -> f a
 ```
 For example, `hName :: Field HPerson String` and `hAge :: Field HPerson Int`.
 
-### Updating a single field
+## Updating a single field
 One of the issues with normal `Storable`-based FFI is that, even if you define a `Storable` instance for a user-defined struct, you cannot perform any field-wise updates on it.
 With HKD we can, as follows:
 ```haskell
@@ -327,7 +327,7 @@ flip runReaderT ptr $ do
 The field accessors of `MyStruct` now double as field accessors for our _foreign_ struct.
 I'm leaving `getField` as an exercise, but it works the same way.
 
-### Constructing the `SPtr`
+## Constructing the `SPtr`
 Where does the `SPtr` actually come from?
 As you might have guessed, we can make one with a descriptor.
 ```haskell
@@ -366,7 +366,7 @@ Conversely, the existence of the `SDescriptor MyStruct` proves that every field 
 For example, you could not add a `String` field to `MyStruct`, since `String` aren't `Storable`.
 We'll look into how you might deal with strings in the section on arrays below.
 
-### Nested structs
+## Nested structs
 
 The initial example already hinted at the fact that structs/descriptors can be nested.
 The data definition is fairly straightforward, no different from how you would normally do it with HKD:
@@ -385,7 +385,7 @@ descMySuperStruct field = MySuperStruct
     <*> descMySubStruct (\subField -> field (subField . nestedData))
 ```
 
-### Arrays
+## Arrays
 As a final thought, let's think about how to approach structs that contain arrays.
 This will be just one of the ways to tackle it, but there are ways to go e.g. statically known sizes.
 
@@ -425,7 +425,7 @@ type ArrDescriptor struct = forall m fArr fField. Applicative m
 
 [^arr]: Or more. You might want to make a special case for `String` types, or dynamically sized arrays...
 
-## Conclusion
+# Conclusion
 
 When you're in the trenches of a tutorial like this, it can be hard to see the forest for the trees.
 Especially when working with nested structs and arrays, our types got pretty involved.

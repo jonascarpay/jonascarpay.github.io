@@ -15,7 +15,7 @@ Here are some of the things I learned from that experience.
 
 This post is not about how you write your first parser, but rather about what things to consider when writing a more complicated parser.
 
-## Parser combinators vs. parser generators
+# Parser combinators vs. parser generators
 
 The first choice you have to make is between parser _combinators_ and parser _generators_.
 
@@ -29,7 +29,7 @@ If you're writing Haskell, you really have only one choice here, [`happy`](https
 `happy` is well documented and used by large compilers, including [GHC](https://github.com/ghc/ghc/blob/master/compiler/GHC/Parser.y) and [PureScript](https://github.com/purescript/purescript/blob/master/lib/purescript-cst/src/Language/PureScript/CST/Parser.y).
 For the rest of this post, when I talk about parser generators, you can assume I'm talking about `happy` and vice-versa.
 
-### Static analysis
+## Static analysis
 
 Conceptually, the main advantage of generators is the fact that they perform static analysis of your grammar.
 Writing a parser is tricky, and having something check whether your grammar actually makes sense can save you many headaches.
@@ -49,7 +49,7 @@ A note about (left-)recursive grammars;
 it is true that this can be hard to get right using parser combinators, but many parser combinator libraries provide tools to help you out with this, and I've never actually had any issues with it.
 I recommend taking a look at [`makeExprParser` from `parser-combinators`](https://hackage.haskell.org/package/parser-combinators-1.3.0/docs/Control-Monad-Combinators-Expr.html#v:makeExprParser).
 
-### Integration
+## Integration
 
 The fact that parser combinators are ordinary Haskell libraries makes them really easy to integrate into your project.
 On the other hand, a parser _generator_ stack with all of its glue code can require you to have duplicate definitions in several places, and in general just require many times more lines of code than parser combinators.
@@ -60,7 +60,7 @@ The tools tend to do a good job of warning you about missing/wrong/dead code, so
 Actually integrating `happy` into a Haskell project is also mostly painless.
 Add `build-tool-depends: happy:happy` to your cabal file, and then you can use `happy`'s `.y` files as if they were ordinary `.hs` files.
 
-### Error handling
+## Error handling
 
 You may have noticed before that GHC has really poor parse errors; or to be more precise, that it doesn't.
 This is not GHC's fault, or `happy`'s, for that matter, this is largely [a fundamental issue with $LALR(1)$ parsers](https://stackoverflow.com/questions/5430700/how-to-get-nice-syntax-error-messages-with-happy#comment6150583_5430700).
@@ -80,7 +80,7 @@ While impressive, actually getting this quality of error messages can be tricky.
 When backtracking it's easy to accidentally discard useful error messages for unclear/wrong ones, or report them at the wrong place, at which point it might be better to have no error messages at all.
 The lesson here is that in theory, parser combinators are the clear winner here, but it still requires some care to actually get good error messages.
 
-## Lexical analysis/tokenization
+# Lexical analysis/tokenization
 
 Lexical analysis/tokenization is the process of turning a sequence of characters into a sequence of _tokens_.
 Parser generators typically expect tokenized input.
@@ -89,7 +89,7 @@ So, if you're using `happy`, you're going to _have_ to do tokenization, but if y
 
 Let's start by looking at some reasons you might _not_ want to do tokenization.
 
-### The case against tokenization
+## The case against tokenization
 
 The simple reason for not tokenizing is that adding an extra pass means extra overhead, both in terms of lines of code and performance.
 In terms of code, at the very least you end up defining an extra data type to represent your tokens, plus the parser logic to operate on the token stream.
@@ -98,7 +98,7 @@ If you want error messages that point back to their original source location, yo
 
 Furthermore, while parser combinator libraries might _support_ custom token streams, they are rarely _optimized_ for them, more on which later.
 
-### The case for tokenization
+## The case for tokenization
 
 The first and primary reason for tokenizing is the separation of concerns.
 One way or another, you will need to take care not to make any lexical errors.
@@ -116,7 +116,7 @@ With a separate tokenization pass, even if you _parse_ multiple times, at least 
 This tokenization can actually be fairly expensive, especially when you have long comments, error handling, or complicated source position tracking logic.
 So, for non-trivial parsers, separately tokenizing can be (and in my case _was_) many times faster.
 
-### How to tokenize
+## How to tokenize
 
 You can easily write a tokenizer using any parser combinator library.
 As far as they're concerned, it's just another parser.
@@ -137,7 +137,7 @@ I recommend taking a look at the [source code for the wrappers `alex` ships with
 
 From there, you just stream the result of the generated `alexScan` function, and you're good.
 
-#### Character encodings
+### Character encodings
 
 One thing to note is that `alex` will always assume its input is UTF-8 encoded[^encoding].
 If you don't explicitly allow Unicode characters in your tokens this doesn't affect you in any way, but if you want, you can use it to get Unicode support almost for free.
@@ -152,7 +152,7 @@ The second benefit is that `Text`, like most Haskell values, and in contrast to 
 A full discussion is out of scope for this article, let alone this footnote, but in brief, _unpinned_ means that the garbage collector is able to move it around as it sees fit.
 Pinning is good if you have few, long pieces of data that are involved in FFI, but since none of those apply here, you want an unpinned data type.
 
-## What parser combinator library to use
+# What parser combinator library to use
 
 At this point, you should have some idea of which of these three options you want:
 
@@ -164,13 +164,13 @@ In the first case, you don't really get much choice; you're using `alex` + `happ
 The other two options, however, require you to choose from Haskell's vast collection of parser combinator libraries.
 My knowledge of that landscape is fairly limited, but here are some recommendations anyway.
 
-### Parser combinators all the way down
+## Parser combinators all the way down
 
 My general advice here has always been that for non-trivial parsing of raw textual input, you can't go wrong with `megaparsec`.
 It's fast, well-documented, has good error messages, and with [Mark's tutorial](https://markkarpov.com/tutorial/megaparsec.html) it's very easy to pick up.
 Other libraries may be faster, or have more elaborate error messages, but never both.
 
-### Tokenizing + parser combinators
+## Tokenizing + parser combinators
 
 This is where things get interesting.
 
@@ -187,7 +187,7 @@ This makes it fast, since your streaming logic is just incrementing that integer
 The `Alternative` instance _always_ backtracks, but to still get good error messages it maintains the messages of whatever branch made the most progress while parsing.
 All in all, it's about 40 lines of code, yet it's almost _three_ times as fast as the old all-`megaparsec` non-tokenized parser.
 
-## Conclusion
+# Conclusion
 
 It's interesting to see how different approaches to parsing "scale up".
 For most simple parse jobs, you really don't need much more than a simple parser combinator library.
