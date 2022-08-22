@@ -99,27 +99,27 @@
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#motivating-example">Motivating example</a></li>
-<li><a href="#simple-descriptors">Simple Descriptors</a></li>
-<li><a href="#descriptors-with-higher-kinded-data">Descriptors with Higher-Kinded Data</a>
+<li><a href="#motivating-example"><span class="toc-section-number">1</span> Motivating example</a></li>
+<li><a href="#simple-descriptors"><span class="toc-section-number">2</span> Simple Descriptors</a></li>
+<li><a href="#descriptors-with-higher-kinded-data"><span class="toc-section-number">3</span> Descriptors with Higher-Kinded Data</a>
 <ul>
-<li><a href="#hkd-type-classes">HKD type classes</a></li>
+<li><a href="#hkd-type-classes"><span class="toc-section-number">3.1</span> HKD type classes</a></li>
 </ul></li>
-<li><a href="#structs-and-ffi">Structs and FFI</a>
+<li><a href="#structs-and-ffi"><span class="toc-section-number">4</span> Structs and FFI</a>
 <ul>
-<li><a href="#updating-a-single-field">Updating a single field</a></li>
-<li><a href="#constructing-the-sptr">Constructing the <code>SPtr</code></a></li>
-<li><a href="#nested-structs">Nested structs</a></li>
-<li><a href="#arrays">Arrays</a></li>
+<li><a href="#updating-a-single-field"><span class="toc-section-number">4.1</span> Updating a single field</a></li>
+<li><a href="#constructing-the-sptr"><span class="toc-section-number">4.2</span> Constructing the <code>SPtr</code></a></li>
+<li><a href="#nested-structs"><span class="toc-section-number">4.3</span> Nested structs</a></li>
+<li><a href="#arrays"><span class="toc-section-number">4.4</span> Arrays</a></li>
 </ul></li>
-<li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#conclusion"><span class="toc-section-number">5</span> Conclusion</a></li>
 </ul>
 <hr />
 </nav>
 <p>One of my eventual goals with this blog is a post, or series of posts self-importantly titled <em>Effective Haskell</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. It’s a response to the recent <a href="https://www.simplehaskell.org/">Simple</a>/<a href="https://www.snoyman.com/blog/2019/11/boring-haskell-manifesto">Boring</a>/<a href="https://www.parsonsmatt.org/2019/12/26/write_junior_code.html">Junior</a> Haskell movement. It’s true that when writing Haskell in production, you need to be cautious not to accrue accidental complexity. My issue with the argument is the implication that we’re giving something up. Instead, I’d argue that using “advanced” features like GADTs, Type Families and even type classes is often unnecessary in the first place<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, and a failure to find a simpler solution.</p>
 <p>I’m not sure if I’ll ever actually finish a single post in <em>Effective Haskell</em>, but what I’m going to do in the meantime is use this blog to collect examples of what I think would classify as Effective Haskell.</p>
 <p>In this inaugural post, we will be studying a technique (ostensibly) for iterating over record fields and adding metadata to them, without using Template Haskell or Generics. I’m calling it a <em><a href="https://en.wikipedia.org/wiki/Data_descriptor">descriptor</a></em> because that’s what it reminds me of, but if somebody else has named it before, or just knows a more fitting name, please let me know.</p>
-<h2 id="motivating-example">Motivating example</h2>
+<h1 data-number="1" id="motivating-example"><span class="header-section-number">1</span> Motivating example</h1>
 <p>Our initial motivating example is from where I initially stumbled into this technique.</p>
 <p>The goal of the library in this example is to give a way to define graphics pipelines in a safe and efficient way. The user of the library formulates the global arguments (<em>uniforms</em> in GL parlance) to a pipeline on the Haskell side as a data type:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Blinn</span> f <span class="ot">=</span> <span class="dt">Blinn</span></span>
@@ -158,7 +158,7 @@
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  drawMesh mesh</span></code></pre></div>
 <p>The point is this; a descriptor is an ordinary value, that you can have users provide about their data type. You can then use this value to do complicated things, in a type-safe manner, without the library ever having seen the original type, and without the user having to be aware of the machinery.</p>
 <p>What the descriptor ultimately looks like will depend on the application<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, but the principles stay the same. You might already be able to discern a lot by looking at how they’re used above, but let’s see how they work.</p>
-<h2 id="simple-descriptors">Simple Descriptors</h2>
+<h1 data-number="2" id="simple-descriptors"><span class="header-section-number">2</span> Simple Descriptors</h1>
 <p>Let’s say we’re writing a library that provides a way to ask for data on the command line. We expose a function that, given a label, parsing function, and verification function, asks for and yields a single value:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">ask ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> <span class="dt">IO</span> a</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ask label parse check <span class="ot">=</span> go <span class="kw">where</span></span>
@@ -227,7 +227,7 @@
 <li><code>validate</code> is a bit contrived; only outputting a list of invalid fields is hard to deal with safely.</li>
 </ol>
 <p>All of that is solved when we use <em>Higher-Kinded Data (HKD)</em>, which is where this technique really comes into its own.</p>
-<h2 id="descriptors-with-higher-kinded-data">Descriptors with Higher-Kinded Data</h2>
+<h1 data-number="3" id="descriptors-with-higher-kinded-data"><span class="header-section-number">3</span> Descriptors with Higher-Kinded Data</h1>
 <p><a href="https://reasonablypolymorphic.com/blog/higher-kinded-data/">Higher-Kinded Data</a> is a pattern where you parameterize record fields over some functor, like this:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">HPerson</span> f <span class="ot">=</span> <span class="dt">HPerson</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> hName ::</span> f <span class="dt">String</span></span>
@@ -270,7 +270,7 @@
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">case</span> parse <span class="op">$</span> getConst (f s) <span class="kw">of</span></span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Just</span> r <span class="op">|</span> check r <span class="ot">-&gt;</span> <span class="dt">Just</span> r</span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    _ <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span></code></pre></div>
-<h3 id="hkd-type-classes">HKD type classes</h3>
+<h2 data-number="3.1" id="hkd-type-classes"><span class="header-section-number">3.1</span> HKD type classes</h2>
 <p>When you use HKD, you typically want to be able to <code>map</code>/<code>traverse</code>/<code>&lt;*&gt;</code> the fields of your record. There are libraries like <a href="https://hackage.haskell.org/package/higgledy"><code>higgledy</code></a>, <a href="https://hackage.haskell.org/package/barbies"><code>barbies</code></a>, <a href="https://hackage.haskell.org/package/barbies-th"><code>barbies-th</code></a>, or <a href="https://hackage.haskell.org/package/hkd"><code>hkd</code></a> that help you derive the required instances (and other nice things). We can show that a descriptor gives you the same power:</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dmap ::</span> <span class="dt">HDescriptor</span> s <span class="ot">-&gt;</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">forall</span> a<span class="op">.</span> f a <span class="ot">-&gt;</span> g a) <span class="ot">-&gt;</span> s f <span class="ot">-&gt;</span> s g</span>
@@ -292,11 +292,11 @@
 <span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>dliftA2 desc fn sf sg <span class="ot">=</span> runIdentity <span class="op">$</span></span>
 <span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  desc <span class="op">$</span> \f _ _ _ <span class="ot">-&gt;</span> <span class="fu">pure</span> <span class="op">$</span> fn (f sf) (f sg)</span></code></pre></div>
 <p>This doesn’t necessarily mean that descriptors compete with the libraries above. The actual use cases are different, descriptors work best when you have to provide an interface to library users and don’t want to force them to use Template Haskell, Generics, or dependencies.</p>
-<h2 id="structs-and-ffi">Structs and FFI</h2>
+<h1 data-number="4" id="structs-and-ffi"><span class="header-section-number">4</span> Structs and FFI</h1>
 <p>Briefly, before we continue: every record field accessor of an HKD has type <code>forall f. s f -&gt; f a</code>. To avoid having to quantify the <code>f</code> every time, we’re going to assign it a type signature:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Field</span> s a <span class="ot">=</span> <span class="kw">forall</span> f<span class="op">.</span> s f <span class="ot">-&gt;</span> f a</span></code></pre></div>
 <p>For example, <code>hName :: Field HPerson String</code> and <code>hAge :: Field HPerson Int</code>.</p>
-<h3 id="updating-a-single-field">Updating a single field</h3>
+<h2 data-number="4.1" id="updating-a-single-field"><span class="header-section-number">4.1</span> Updating a single field</h2>
 <p>One of the issues with normal <code>Storable</code>-based FFI is that, even if you define a <code>Storable</code> instance for a user-defined struct, you cannot perform any field-wise updates on it. With HKD we can, as follows:</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">MyStruct</span> f <span class="ot">=</span> <span class="dt">MyStruct</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> versionMajor        ::</span> f <span class="dt">Int</span></span>
@@ -324,7 +324,7 @@
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  versionMajor <span class="op">$=</span> <span class="dv">2</span></span>
 <span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  versionMinor <span class="op">$=</span> <span class="dv">1</span></span></code></pre></div>
 <p>The field accessors of <code>MyStruct</code> now double as field accessors for our <em>foreign</em> struct. I’m leaving <code>getField</code> as an exercise, but it works the same way.</p>
-<h3 id="constructing-the-sptr">Constructing the <code>SPtr</code></h3>
+<h2 data-number="4.2" id="constructing-the-sptr"><span class="header-section-number">4.2</span> Constructing the <code>SPtr</code></h2>
 <p>Where does the <code>SPtr</code> actually come from? As you might have guessed, we can make one with a descriptor.</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ptr <span class="ot">&lt;-</span> newSPtr <span class="op">$</span> \field <span class="ot">-&gt;</span> <span class="dt">MyStruct</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;$&gt;</span> field versionMajor        <span class="dv">1</span></span>
@@ -350,7 +350,7 @@
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>     )</span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> m (struct f)</span></code></pre></div>
 <p>This means that, as soon as one of the fields of <code>MyStruct</code> is <em>not</em> <code>Storable</code>, you cannot write a <code>SDescriptor</code> for it. Conversely, the existence of the <code>SDescriptor MyStruct</code> proves that every field of <code>MyStruct</code> is <code>Storable</code>. For example, you could not add a <code>String</code> field to <code>MyStruct</code>, since <code>String</code> aren’t <code>Storable</code>. We’ll look into how you might deal with strings in the section on arrays below.</p>
-<h3 id="nested-structs">Nested structs</h3>
+<h2 data-number="4.3" id="nested-structs"><span class="header-section-number">4.3</span> Nested structs</h2>
 <p>The initial example already hinted at the fact that structs/descriptors can be nested. The data definition is fairly straightforward, no different from how you would normally do it with HKD:</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">MySuperStruct</span> f <span class="ot">=</span> <span class="dt">MySuperStruct</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> someInt ::</span> f <span class="dt">Int</span></span>
@@ -361,7 +361,7 @@
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>descMySuperStruct field <span class="ot">=</span> <span class="dt">MySuperStruct</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;$&gt;</span> field someInt <span class="dv">1</span></span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;*&gt;</span> descMySubStruct (\subField <span class="ot">-&gt;</span> field (subField <span class="op">.</span> nestedData))</span></code></pre></div>
-<h3 id="arrays">Arrays</h3>
+<h2 data-number="4.4" id="arrays"><span class="header-section-number">4.4</span> Arrays</h2>
 <p>As a final thought, let’s think about how to approach structs that contain arrays. This will be just one of the ways to tackle it, but there are ways to go e.g. statically known sizes.</p>
 <p>The trick here is to give our records <em>two</em><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> functor parameters:</p>
 <div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Image</span> fArr fPrim <span class="ot">=</span> <span class="dt">Image</span></span>
@@ -389,7 +389,7 @@
 <span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> m (fField a)</span>
 <span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>     )</span>
 <span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="ot">-&gt;</span> m (struct fArr fField)</span></code></pre></div>
-<h2 id="conclusion">Conclusion</h2>
+<h1 data-number="5" id="conclusion"><span class="header-section-number">5</span> Conclusion</h1>
 <p>When you’re in the trenches of a tutorial like this, it can be hard to see the forest for the trees. Especially when working with nested structs and arrays, our types got pretty involved. However, I hope I have also been able to convince you that when this approach works, it can work <em>really</em> well. The library author (person who defines the descriptor) gets a lot of power, and the user (person who implements the descriptor) only has to define a single generic traversal. Furthermore, since we aren’t using any existing abstractions, we get to completely tailor it to our own needs, as you saw in the array example.</p>
 <p>Ultimately, I’m not sure if the ideas here are going to be useful for many people. I have worked with libraries that horribly over-complicated their FFI so I know there are at least <em>some</em> people who might find this useful, but that’s not really the point of this post. Most importantly, I think it’s a neat example of how we can write wonderful abstract interfaces with <em>just</em> <code>RankNTypes</code> and some polymorphism in the right places.</p>
 <p>If you have any questions or criticism, feel free to contact me.</p>

@@ -35,7 +35,7 @@ div.toc {padding: 10px 20px;}
 .toc .title {
   font-weight:bold;
   font-size: 135%;
-  color: #aaa;
+  color: #999;
 }
 
 div.taglist {
@@ -55,6 +55,10 @@ div.sourceCode {
   text-align: center;
 }
 
+span.header-section-number {
+  color: #aaa;
+}
+
 @media (prefers-color-scheme: dark){
   body {
     background-color:#222;
@@ -64,9 +68,16 @@ div.sourceCode {
     background-color:#333;
   }
   code.sourceCode > span { color: #ddd; }
-  code span.ot { color: #294; }
-  code span.kw { color: #294; }
-  code span.fu { color: #46689e; }
+  code span.ot { color: #EBBA34; }
+  code span.kw { color: #EBBA34; }
+  code span.cf { color: #EBBA34; }
+  code span.fu { color: #D16C4D; }
+  code span.st { color: #BDB08D; }
+  code span.ch { color: #BDB08D; font-weight: bold; }
+  code span.va { color: #EBBA34; }
+  code span.dt { color: #D16C4D; }
+  code span.op, code span.dv { color: #BDB08D; }
+  code span.co { color: #aaa; }
   a:link { color: #EBBA34; }
   a:visited { color: #BDB08D; }
   .toc .title { color: #aaa; }

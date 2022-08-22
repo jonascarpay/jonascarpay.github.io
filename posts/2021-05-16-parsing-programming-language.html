@@ -36,43 +36,43 @@
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#parser-combinators-vs.-parser-generators">Parser combinators vs. parser generators</a>
+<li><a href="#parser-combinators-vs.-parser-generators"><span class="toc-section-number">1</span> Parser combinators vs. parser generators</a>
 <ul>
-<li><a href="#static-analysis">Static analysis</a></li>
-<li><a href="#integration">Integration</a></li>
-<li><a href="#error-handling">Error handling</a></li>
+<li><a href="#static-analysis"><span class="toc-section-number">1.1</span> Static analysis</a></li>
+<li><a href="#integration"><span class="toc-section-number">1.2</span> Integration</a></li>
+<li><a href="#error-handling"><span class="toc-section-number">1.3</span> Error handling</a></li>
 </ul></li>
-<li><a href="#lexical-analysistokenization">Lexical analysis/tokenization</a>
+<li><a href="#lexical-analysistokenization"><span class="toc-section-number">2</span> Lexical analysis/tokenization</a>
 <ul>
-<li><a href="#the-case-against-tokenization">The case against tokenization</a></li>
-<li><a href="#the-case-for-tokenization">The case for tokenization</a></li>
-<li><a href="#how-to-tokenize">How to tokenize</a></li>
+<li><a href="#the-case-against-tokenization"><span class="toc-section-number">2.1</span> The case against tokenization</a></li>
+<li><a href="#the-case-for-tokenization"><span class="toc-section-number">2.2</span> The case for tokenization</a></li>
+<li><a href="#how-to-tokenize"><span class="toc-section-number">2.3</span> How to tokenize</a></li>
 </ul></li>
-<li><a href="#what-parser-combinator-library-to-use">What parser combinator library to use</a>
+<li><a href="#what-parser-combinator-library-to-use"><span class="toc-section-number">3</span> What parser combinator library to use</a>
 <ul>
-<li><a href="#parser-combinators-all-the-way-down">Parser combinators all the way down</a></li>
-<li><a href="#tokenizing-parser-combinators">Tokenizing + parser combinators</a></li>
+<li><a href="#parser-combinators-all-the-way-down"><span class="toc-section-number">3.1</span> Parser combinators all the way down</a></li>
+<li><a href="#tokenizing-parser-combinators"><span class="toc-section-number">3.2</span> Tokenizing + parser combinators</a></li>
 </ul></li>
-<li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#conclusion"><span class="toc-section-number">4</span> Conclusion</a></li>
 </ul>
 <hr />
 </nav>
 <p>Choosing a parsing library in Haskell can be tough. I recently rewrote the parser for my programming language’s fairly complicated grammar, first from <a href="https://hackage.haskell.org/package/megaparsec"><code>megaparsec</code></a> to <a href="https://hackage.haskell.org/package/happy"><code>happy</code></a>, and then from <code>happy</code> to a custom solution. So, I had the pleasure of reimplementing the same grammar three times, in three very different systems. Here are some of the things I learned from that experience.</p>
 <p>This post is not about how you write your first parser, but rather about what things to consider when writing a more complicated parser.</p>
-<h2 id="parser-combinators-vs.-parser-generators">Parser combinators vs. parser generators</h2>
+<h1 data-number="1" id="parser-combinators-vs.-parser-generators"><span class="header-section-number">1</span> Parser combinators vs. parser generators</h1>
 <p>The first choice you have to make is between parser <em>combinators</em> and parser <em>generators</em>.</p>
 <p>A parser <em>combinator</em> library is the most common way of parsing in Haskell. The idea is that the library gives you parsers to consume small pieces of input, and ways of combining those smaller parsers into larger parsers. There are many examples of these in the Haskell ecosystem, most notably <code>parsec</code> and its progeny.</p>
 <p>A parser <em>generator</em> is a program that takes a formal definition of your language written in some DSL, and generates parsing code. This is the “traditional” way of writing programming language parsers, and how most compilers work. If you’re writing Haskell, you really have only one choice here, <a href="https://www.haskell.org/happy/"><code>happy</code></a>. <code>happy</code> is well documented and used by large compilers, including <a href="https://github.com/ghc/ghc/blob/master/compiler/GHC/Parser.y">GHC</a> and <a href="https://github.com/purescript/purescript/blob/master/lib/purescript-cst/src/Language/PureScript/CST/Parser.y">PureScript</a>. For the rest of this post, when I talk about parser generators, you can assume I’m talking about <code>happy</code> and vice-versa.</p>
-<h3 id="static-analysis">Static analysis</h3>
+<h2 data-number="1.1" id="static-analysis"><span class="header-section-number">1.1</span> Static analysis</h2>
 <p>Conceptually, the main advantage of generators is the fact that they perform static analysis of your grammar. Writing a parser is tricky, and having something check whether your grammar actually makes sense can save you many headaches. A lot of parsing theory focuses on cases where generators can handle certain recursive grammars that are tricky to correctly implement using combinators. In practice, however, even without recursion it’s just easy to write incorrect and hard-to-debug parsers using combinators, which generators would rightly reject at compile time.</p>
 <p>Unfortunately, while the parser generator will typically give you a good description of ambiguities/conflicts, it can still be tricky to actually diagnose and fix your grammar. This is exacerbated by the fact that what is and is not a conflict can depend on the algorithm that the generator uses. The default <span class="math inline"><em>L</em><em>A</em><em>L</em><em>R</em>(1)</span> algorithm in <code>happy</code> can be quite restrictive, in ways that may be non-obvious if you don’t know how the algorithm works. Frustratingly, <code>happy</code> itself supports more flexible algorithms, but the <code>cabal</code> tooling does not allow you to configure it to use those algorithms.</p>
 <p>More generally, there is a discussion is similar to static vs. dynamic typing. Just like there are valid programs that can be hard to type check, you can have a perfectly fine grammar that is hard to generate a parser for. How strongly you value that static analysis, and whether you are prepared to make concessions to your language for the sake of provable correctness is a choice you have to make per project.</p>
 <p>A note about (left-)recursive grammars; it is true that this can be hard to get right using parser combinators, but many parser combinator libraries provide tools to help you out with this, and I’ve never actually had any issues with it. I recommend taking a look at <a href="https://hackage.haskell.org/package/parser-combinators-1.3.0/docs/Control-Monad-Combinators-Expr.html#v:makeExprParser"><code>makeExprParser</code> from <code>parser-combinators</code></a>.</p>
-<h3 id="integration">Integration</h3>
+<h2 data-number="1.2" id="integration"><span class="header-section-number">1.2</span> Integration</h2>
 <p>The fact that parser combinators are ordinary Haskell libraries makes them really easy to integrate into your project. On the other hand, a parser <em>generator</em> stack with all of its glue code can require you to have duplicate definitions in several places, and in general just require many times more lines of code than parser combinators.</p>
 <p>While annoying, I personally don’t think this is a huge problem in practice. The tools tend to do a good job of warning you about missing/wrong/dead code, so the actual burden of maintenance is not drastically higher.</p>
 <p>Actually integrating <code>happy</code> into a Haskell project is also mostly painless. Add <code>build-tool-depends: happy:happy</code> to your cabal file, and then you can use <code>happy</code>’s <code>.y</code> files as if they were ordinary <code>.hs</code> files.</p>
-<h3 id="error-handling">Error handling</h3>
+<h2 data-number="1.3" id="error-handling"><span class="header-section-number">1.3</span> Error handling</h2>
 <p>You may have noticed before that GHC has really poor parse errors; or to be more precise, that it doesn’t. This is not GHC’s fault, or <code>happy</code>’s, for that matter, this is largely <a href="https://stackoverflow.com/questions/5430700/how-to-get-nice-syntax-error-messages-with-happy#comment6150583_5430700">a fundamental issue with <span class="math inline"><em>L</em><em>A</em><em>L</em><em>R</em>(1)</span> parsers</a>.</p>
 <p>On the other hand, at their best parser combinator libraries can give you amazing parse errors basically for free. Consider this example from <a href="https://markkarpov.com/post/evolution-of-error-messages.html">Mark Karpov’s post on the evolution of <code>megaparsec</code> error messages</a>:</p>
 <pre><code>1:10:
@@ -82,25 +82,25 @@
 unexpected &#39;$&#39;
 expecting &#39;)&#39;, operator, or the rest of expression</code></pre>
 <p>While impressive, actually getting this quality of error messages can be tricky. When backtracking it’s easy to accidentally discard useful error messages for unclear/wrong ones, or report them at the wrong place, at which point it might be better to have no error messages at all. The lesson here is that in theory, parser combinators are the clear winner here, but it still requires some care to actually get good error messages.</p>
-<h2 id="lexical-analysistokenization">Lexical analysis/tokenization</h2>
+<h1 data-number="2" id="lexical-analysistokenization"><span class="header-section-number">2</span> Lexical analysis/tokenization</h1>
 <p>Lexical analysis/tokenization is the process of turning a sequence of characters into a sequence of <em>tokens</em>. Parser generators typically expect tokenized input. Parser combinators, on the other hand, can operate equally well on tokenized and raw input. So, if you’re using <code>happy</code>, you’re going to <em>have</em> to do tokenization, but if you’re using combinators, this is the second choice you have to make.</p>
 <p>Let’s start by looking at some reasons you might <em>not</em> want to do tokenization.</p>
-<h3 id="the-case-against-tokenization">The case against tokenization</h3>
+<h2 data-number="2.1" id="the-case-against-tokenization"><span class="header-section-number">2.1</span> The case against tokenization</h2>
 <p>The simple reason for not tokenizing is that adding an extra pass means extra overhead, both in terms of lines of code and performance. In terms of code, at the very least you end up defining an extra data type to represent your tokens, plus the parser logic to operate on the token stream. In terms of performance, tokenizing means that you kind of parse the input (at least) twice, first directly and then chunked into tokens. If you want error messages that point back to their original source location, you then also need to maintain some kind of mapping from your token stream back to your original input.</p>
 <p>Furthermore, while parser combinator libraries might <em>support</em> custom token streams, they are rarely <em>optimized</em> for them, more on which later.</p>
-<h3 id="the-case-for-tokenization">The case for tokenization</h3>
+<h2 data-number="2.2" id="the-case-for-tokenization"><span class="header-section-number">2.2</span> The case for tokenization</h2>
 <p>The first and primary reason for tokenizing is the separation of concerns. One way or another, you will need to take care not to make any lexical errors. As a simple example, looking for the keyword <code>let</code> is not as simple as looking for that sequence in the input stream, since that would also consume the first part of <code>letter</code>. So, you typically end up writing tokenization logic no matter what.</p>
 <p>The question then is just to what degree it’s interwoven with the rest of the parsing code. Parsing can be hard enough by itself, so beyond a certain complexity threshold completely separating the tokenization pass introduces a welcome separation of concerns. Where that threshold lies for you is something you have to decide for yourself. In my case it seemed annoying at first, but once implemented having an interface that is completely free of lexical concerns is so much nicer that it’s a clear winner.</p>
 <p>The second reason you might want to tokenize is that it can actually <em>improve</em> performance. As soon as you start doing backtracking you are, by definition, going to consume the same input multiple times. With a separate tokenization pass, even if you <em>parse</em> multiple times, at least you never <em>tokenize</em> more than once. This tokenization can actually be fairly expensive, especially when you have long comments, error handling, or complicated source position tracking logic. So, for non-trivial parsers, separately tokenizing can be (and in my case <em>was</em>) many times faster.</p>
-<h3 id="how-to-tokenize">How to tokenize</h3>
+<h2 data-number="2.3" id="how-to-tokenize"><span class="header-section-number">2.3</span> How to tokenize</h2>
 <p>You can easily write a tokenizer using any parser combinator library. As far as they’re concerned, it’s just another parser. However, if you’ve decided to do a separate tokenization pass anyway it might be worth looking into <a href="https://www.haskell.org/alex/"><code>alex</code></a>. <code>alex</code> allows you to write your token definitions with a regex-like syntax, and it will generate an optimized tokenizer from it. It is commonly used in conjunction with <code>happy</code>, but it can be used equally well just by itself.</p>
 <p><code>alex</code> is very flexible, and depending on how you use it, can be <em>stupid</em> fast. Besides performance guarantees, you also get some degree of static analysis on your tokens. I recommend trying it out, it’s a much less committal choice than choosing whether you’re using <code>happy</code> or not.</p>
 <p>It’s very simple to use; similar to <code>happy</code> you just add <code>build-tool-depends: alex:alex</code> to your <code>.cabal</code> file, and you can now use <code>.x</code> files as normal Haskell modules. It ships with a few “wrappers”, which provide the glue code between the generated code and the rest of your project.</p>
 <p>These wrappers might not actually cover your exact needs, but fortunately, it’s actually really easy to just write the glue code yourself. It requires you to provide two definitions (the <code>AlexInput</code> type and <code>alexGetByte</code> function), and gives you more control over performance and source position tracking. I recommend taking a look at the <a href="https://github.com/simonmar/alex/blob/master/data/AlexWrappers.hs">source code for the wrappers <code>alex</code> ships with</a>, and adapting them to your needs.</p>
 <p>From there, you just stream the result of the generated <code>alexScan</code> function, and you’re good.</p>
-<h4 id="character-encodings">Character encodings</h4>
+<h3 data-number="2.3.1" id="character-encodings"><span class="header-section-number">2.3.1</span> Character encodings</h3>
 <p>One thing to note is that <code>alex</code> will always assume its input is UTF-8 encoded<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. If you don’t explicitly allow Unicode characters in your tokens this doesn’t affect you in any way, but if you want, you can use it to get Unicode support almost for free. First, in the token specification, add a line <code>$uniChar = [\192-\x10ffff]</code> and use that wherever Unicode characters are allowed. Then, in the Haskell parts, use <code>Data.Text.Encoding.decodeUTF8</code> to decode the <code>ByteString</code> chunks you receive from your tokenizer into <code>Text</code><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
-<h2 id="what-parser-combinator-library-to-use">What parser combinator library to use</h2>
+<h1 data-number="3" id="what-parser-combinator-library-to-use"><span class="header-section-number">3</span> What parser combinator library to use</h1>
 <p>At this point, you should have some idea of which of these three options you want:</p>
 <ul>
 <li>Tokenizer + parser generator</li>
@@ -108,14 +108,14 @@ expecting &#39;)&#39;, operator, or the rest of expression</code></pre>
 <li>Parser combinators all the way down</li>
 </ul>
 <p>In the first case, you don’t really get much choice; you’re using <code>alex</code> + <code>happy</code>. The other two options, however, require you to choose from Haskell’s vast collection of parser combinator libraries. My knowledge of that landscape is fairly limited, but here are some recommendations anyway.</p>
-<h3 id="parser-combinators-all-the-way-down">Parser combinators all the way down</h3>
+<h2 data-number="3.1" id="parser-combinators-all-the-way-down"><span class="header-section-number">3.1</span> Parser combinators all the way down</h2>
 <p>My general advice here has always been that for non-trivial parsing of raw textual input, you can’t go wrong with <code>megaparsec</code>. It’s fast, well-documented, has good error messages, and with <a href="https://markkarpov.com/tutorial/megaparsec.html">Mark’s tutorial</a> it’s very easy to pick up. Other libraries may be faster, or have more elaborate error messages, but never both.</p>
-<h3 id="tokenizing-parser-combinators">Tokenizing + parser combinators</h3>
+<h2 data-number="3.2" id="tokenizing-parser-combinators"><span class="header-section-number">3.2</span> Tokenizing + parser combinators</h2>
 <p>This is where things get interesting.</p>
 <p>You can obviously use any parser combinator library that supports custom input streams. From the ones I know, I find that <code>parsec</code> is actually best at this. <code>megaparsec</code> can do it too, but its interfaces really emphasize non-tokenized inputs, which can make it a bit unwieldy.</p>
 <p>If you’re not already using either of those for tokenizing, however, I think it’s worth considering writing a parser combinator library yourself. They’re really simple, the code it takes to write them is barely longer than the code it would take to integrate an existing parser. The advantage is that you get a lot of fine-grained control over performance and error-handling.</p>
 <p>For example, in my case, I store my tokens in a vector, so the parser state consists of just an index into that vector. This makes it fast, since your streaming logic is just incrementing that integer. The <code>Alternative</code> instance <em>always</em> backtracks, but to still get good error messages it maintains the messages of whatever branch made the most progress while parsing. All in all, it’s about 40 lines of code, yet it’s almost <em>three</em> times as fast as the old all-<code>megaparsec</code> non-tokenized parser.</p>
-<h2 id="conclusion">Conclusion</h2>
+<h1 data-number="4" id="conclusion"><span class="header-section-number">4</span> Conclusion</h1>
 <p>It’s interesting to see how different approaches to parsing “scale up”. For most simple parse jobs, you really don’t need much more than a simple parser combinator library. For more complex grammars, I recommend tokenizing and then running either <code>happy</code> or some sort of custom parser on top. Ultimately, it depends on the project and its requirements, but this should at least have given you some idea of the options you have available.</p>
 <section class="footnotes" role="doc-endnotes">
 <hr />

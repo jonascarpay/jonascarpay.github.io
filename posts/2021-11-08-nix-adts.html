@@ -99,10 +99,10 @@
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#naive-tagged-unions">Naive tagged unions</a></li>
-<li><a href="#attribute-sets-of-continuations">Attribute sets of continuations</a></li>
-<li><a href="#tagged-unions-revisited">Tagged unions revisited</a></li>
-<li><a href="#conclusions">Conclusions</a></li>
+<li><a href="#naive-tagged-unions"><span class="toc-section-number">1</span> Naive tagged unions</a></li>
+<li><a href="#attribute-sets-of-continuations"><span class="toc-section-number">2</span> Attribute sets of continuations</a></li>
+<li><a href="#tagged-unions-revisited"><span class="toc-section-number">3</span> Tagged unions revisited</a></li>
+<li><a href="#conclusions"><span class="toc-section-number">4</span> Conclusions</a></li>
 </ul>
 <hr />
 </nav>
@@ -118,7 +118,7 @@
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>foo (<span class="dt">This</span> a) <span class="ot">=</span> a <span class="op">+</span> <span class="dv">1</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>foo (<span class="dt">That</span> b) <span class="ot">=</span> <span class="kw">if</span> b <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">then</span> b <span class="kw">else</span> <span class="dv">0</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>foo (<span class="dt">These</span> a b) <span class="ot">=</span> a <span class="op">*</span> b</span></code></pre></div>
-<h2 id="naive-tagged-unions">Naive tagged unions</h2>
+<h1 data-number="1" id="naive-tagged-unions"><span class="header-section-number">1</span> Naive tagged unions</h1>
 <p>The most natural and common encoding of an ADT is as what’s often called a tagged union. In Nix, that would mean an attribute set of</p>
 <ul>
 <li>a string tag allowing us to discriminate the constructor</li>
@@ -137,7 +137,7 @@
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>And sure, this <em>technically</em> is a correct implementation of the Haskell code, but it’s not exactly elegant or ergonomic. The pattern matching in particular is hard to read, hard to write, and doesn’t compose very nicely either. Imagine that we’re writing a library, and <em>this</em> is how we ask users to pattern match on the data that we supply them? Yuk.</p>
 <p>Fortunately, we can do better.</p>
-<h2 id="attribute-sets-of-continuations">Attribute sets of continuations</h2>
+<h1 data-number="2" id="attribute-sets-of-continuations"><span class="header-section-number">2</span> Attribute sets of continuations</h1>
 <p>The crucial insight is that Nix’s attribute sets are actually much more suitable for encoding <em>pattern matching</em> than they are for encoding <em>constructors</em>. With the perspective that pattern matches are attribute sets of continuations, constructors simply become the inverse – field selectors and applications. It’s wonderful dualities like these that make functional programmers fancy themselves mystics.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>{</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  This  = a:    match: match.This a;</span>
@@ -152,7 +152,7 @@
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p><em>This</em> is how you want to emulate ADT’s and pattern matching in Nix. It’s readable, composes wonderfully, and even gives some pretty sensible errors if you make what would otherwise be a type error or pattern match failure. The general principle is the same as Church encoding, but by using attribute sets instead of lambda’s, we get named, unordered branches.</p>
 <p>But if this attribute set-based Church encoding is so great, why isn’t this how pattern matching works in PureNix?</p>
-<h2 id="tagged-unions-revisited">Tagged unions revisited</h2>
+<h1 data-number="3" id="tagged-unions-revisited"><span class="header-section-number">3</span> Tagged unions revisited</h1>
 <p>Up until now, this post has been about practical tips that you can apply when writing Nix code. From here on out however, things are going to be less practical (or at least, I hope that you don’t actually have to write code like this by hand). The goal is to explain and motivate the concepts behind the pattern matching implementation in PureNix.</p>
 <p>Languages with first-class support for pattern matching typically offer many more features than just individually matching on every constructor. In PureScript, a patterns can consist of literals, wildcards, ignores, as-patterns, guards, nested patterns, and tupled patterns. We could try to extend the continuation-based implementation above to support <em>some</em> of that, but when you want to support <em>all</em> of these features you end up sacrificing the things that made it so nice in the first place. So, let’s go back to the drawing board.</p>
 <p>Fundamentally, a pattern does two things;</p>
@@ -206,7 +206,7 @@
 <li>the interleaving of binding and checks</li>
 <li>how capturing the <code>fail</code> continuation allows us to fail in multiple places during the scrutinization of the pattern.</li>
 </ul>
-<h2 id="conclusions">Conclusions</h2>
+<h1 data-number="4" id="conclusions"><span class="header-section-number">4</span> Conclusions</h1>
 <p>In <a href="#attribute-sets-of-continuations">Section 2</a> we saw an elegant way of encoding ADT’s and pattern matching as attribute sets of continuations. It’s very readable, pleasant to work with, and works great for most cases. Unfortunately, it doesn’t actually have the power to emulate <em>all</em> of the pattern matching features you expect in a modern functional language.</p>
 <p>In that case, we instead define patterns one-by-one, and compose them by capturing a failure continuation. At this point, the code is not the kind of code you’d typically be happy writing by hand, but the ideas can still be useful in other contexts.</p>
 <p>Thanks for reading, I hope you got something out of it.</p>

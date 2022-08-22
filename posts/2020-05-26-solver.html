@@ -99,30 +99,30 @@
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#the-solver">The Solver</a>
+<li><a href="#the-solver"><span class="toc-section-number">1</span> The Solver</a>
 <ul>
-<li><a href="#n-queens"><span class="math inline"><em>n</em></span> Queens</a></li>
+<li><a href="#n-queens"><span class="toc-section-number">1.1</span> <span class="math inline"><em>n</em></span> Queens</a></li>
 </ul></li>
-<li><a href="#sudoku">Sudoku</a>
+<li><a href="#sudoku"><span class="toc-section-number">2</span> Sudoku</a>
 <ul>
-<li><a href="#anti-knight-sudoku">Anti-Knight Sudoku</a></li>
-<li><a href="#miracle-sudoku">Miracle Sudoku</a></li>
+<li><a href="#anti-knight-sudoku"><span class="toc-section-number">2.1</span> Anti-Knight Sudoku</a></li>
+<li><a href="#miracle-sudoku"><span class="toc-section-number">2.2</span> Miracle Sudoku</a></li>
 </ul></li>
-<li><a href="#a-few-other-puzzles">A Few Other Puzzles</a>
+<li><a href="#a-few-other-puzzles"><span class="toc-section-number">3</span> A Few Other Puzzles</a>
 <ul>
-<li><a href="#n-queens-bishops-and-rooks"><span class="math inline"><em>n</em></span> Queens, Bishops, and Rooks</a></li>
-<li><a href="#nti-knight-queens"><span class="math inline"><em>n</em></span>ti-knight Queens</a></li>
-<li><a href="#star-battle">Star Battle</a></li>
+<li><a href="#n-queens-bishops-and-rooks"><span class="toc-section-number">3.1</span> <span class="math inline"><em>n</em></span> Queens, Bishops, and Rooks</a></li>
+<li><a href="#nti-knight-queens"><span class="toc-section-number">3.2</span> <span class="math inline"><em>n</em></span>ti-knight Queens</a></li>
+<li><a href="#star-battle"><span class="toc-section-number">3.3</span> Star Battle</a></li>
 </ul></li>
-<li><a href="#conclusion">Conclusion</a></li>
-<li><a href="#appendix-omitted-code">Appendix: Omitted Code</a></li>
+<li><a href="#conclusion"><span class="toc-section-number">4</span> Conclusion</a></li>
+<li><a href="#appendix-omitted-code"><span class="toc-section-number">5</span> Appendix: Omitted Code</a></li>
 </ul>
 <hr />
 </nav>
 <p>Judging by the recent surge in popularity of the excellent <a href="https://www.youtube.com/channel/UCC-UOdK8-mIjxBQm_ot1T-Q">Cracking the Cryptic YouTube channel</a>, I’m not the only person for who recent circumstances have led them to rediscover logic puzzles. There is an entire art to hand-crafting these Puzzles that I never appreciated, complete with world-famous “setters”, and it makes for a perfect nerdy rabbit hole for people suddenly spending a lot of time inside. There are classic puzzles, like the Sudoku, but things become especially interesting when you start playing with the rule set. For example, you might have seen the viral <a href="https://www.youtube.com/watch?v=yKf9aUIxdb4">“Miracle Sudoku”</a> that has only 2 given digits (on which more later).</p>
 <p>The same goes for writing solvers: writing a Sudoku solver is trivial, but can we make one in which we can easily play with the rules? Designing an interesting puzzle becomes a lot easier if you can freely experiment with rules while making sure that you still have a unique solution.</p>
 <p>It turns out you can, and it’s a great exercise in higher-order functions and composition. So, in this post, we’re going to write a solver.</p>
-<h1 id="the-solver">The Solver</h1>
+<h1 data-number="1" id="the-solver"><span class="header-section-number">1</span> The Solver</h1>
 <p>A <code>Rule</code> tells us whether, given a <em>partial</em> solution to a puzzle, we can put an answer <code>a</code> in some cell <code>i</code> (for <em>index</em>). Once we manage to assign an answer to <em>every</em> cell in the puzzle, we have a (hopefully unique) solution.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Solution</span> i a <span class="ot">=</span> i <span class="ot">-&gt;</span> a</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Rule</span> i a <span class="ot">=</span> <span class="dt">Solution</span> i (<span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> i <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">All</span></span></code></pre></div>
@@ -151,7 +151,7 @@
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>      a <span class="ot">&lt;-</span> universe</span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      guard <span class="op">.</span> getAll <span class="op">$</span> rule (m <span class="op">Map.!?</span>) i a</span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>      go is (M.insert i a m)</span></code></pre></div>
-<h3 id="n-queens"><span class="math inline"><em>n</em></span> Queens</h3>
+<h2 data-number="1.1" id="n-queens"><span class="header-section-number">1.1</span> <span class="math inline"><em>n</em></span> Queens</h2>
 <p>As an initial exercise/proof-of-concept, we’ll try the classic <span class="math inline"><em>n</em></span> queens puzzle. The object is to place <span class="math inline"><em>n</em></span> queens on an <span class="math inline"><em>n</em> × <em>n</em></span> chess board, such that none is under attack by another. Our domain <code>i</code> consists of the indices of the columns of the board, and our range <code>a</code> is the row at which there is a queen in that column. Both of these are integers in the range <span class="math inline">0…<em>n</em> − 1</span>. We’ll use the <a href="https://hackage.haskell.org/package/finite-typelits"><code>finite-typelits</code></a> package to represent bounded finite integers<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
 <p>We then write a rule that expresses that to place a queen in <span class="math inline">(<em>x</em>,<em>y</em>)</span>, none of the other columns can have a queen in row <span class="math inline"><em>y</em></span> or any of the diagonals of <span class="math inline">(<em>x</em>,<em>y</em>)</span>:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">nqueens ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n) (<span class="dt">Finite</span> n)</span>
@@ -170,7 +170,7 @@
 λ&gt; length $ solve (nqueens @12) []     
 14200</code></pre>
 <p>Now that we know the solver works, we can turn our attention towards Sudoku solving.</p>
-<h1 id="sudoku">Sudoku</h1>
+<h1 data-number="2" id="sudoku"><span class="header-section-number">2</span> Sudoku</h1>
 <p>One thing that will come up <em>a lot</em> in these puzzles is the concept of a cell “seeing” other cells. For example, in normal Sudoku rules a cell “sees” all cells in its row, column, and <span class="math inline">3 × 3</span> box. We express this as a function, from a cell to a set of all the cells it sees:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Sees</span> i <span class="ot">=</span> i <span class="ot">-&gt;</span> <span class="dt">Set</span> i</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -234,7 +234,7 @@ fromList [(0,2),(1,2),(2,2),(3,0),(3,1),(3,2),(3,3),(3,4),(3,5),(3,6),(3,7),(3,8
 9 6 1 5 3 7 2 8 4
 2 8 7 4 1 9 6 3 5
 3 4 5 2 8 6 1 7 9</code></pre>
-<h3 id="anti-knight-sudoku">Anti-Knight Sudoku</h3>
+<h2 data-number="2.1" id="anti-knight-sudoku"><span class="header-section-number">2.1</span> Anti-Knight Sudoku</h2>
 <p>It looks like our solver works, so let’s write some Sudoku variations. For example, one popular variation is anti-knight Sudoku, in which, in addition to the normal Sudoku rules, a cell cannot contain the same digit as any cell a chess knight’s move away:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">fromOffsets ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> [(<span class="dt">Integer</span>, <span class="dt">Integer</span>)] <span class="ot">-&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>fromOffsets offsets (x, y) <span class="ot">=</span> Set.fromList <span class="op">$</span> <span class="kw">do</span></span>
@@ -274,7 +274,7 @@ fromList [(0,2),(1,2),(2,2),(3,0),(3,1),(3,2),(3,3),(3,4),(3,5),(3,6),(3,7),(3,8
 3 5 7 1 9 8 4 2 6
 8 9 2 7 6 4 1 5 3
 1 6 4 3 5 2 7 8 9</code></pre>
-<h3 id="miracle-sudoku">Miracle Sudoku</h3>
+<h2 data-number="2.2" id="miracle-sudoku"><span class="header-section-number">2.2</span> Miracle Sudoku</h2>
 <p>We’re ready for the “Miracle” Sudoku we talked about in the introduction. The Miracle Sudoku has extremely few givens, but makes up for it in rules. The rules are</p>
 <ul>
 <li>Normal Sudoku</li>
@@ -310,8 +310,8 @@ fromList [(0,2),(1,2),(2,2),(3,0),(3,1),(3,2),(3,3),(3,4),(3,5),(3,6),(3,7),(3,8
 <span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>noConsecutive n <span class="ot">=</span> <span class="dt">All</span> <span class="op">.</span> <span class="fu">all</span> ((<span class="op">/=</span> <span class="dv">1</span>) <span class="op">.</span> difference n)</span></code></pre></div>
 <p>As for actually solving it, I highly recommend <a href="https://cracking-the-cryptic.web.app/sudoku/tjN9LtrrTL">trying it for yourself</a>, especially since if you don’t compile GHCi will take a while.</p>
 <p>That concludes the Sudokus, let’s try a few other puzzles.</p>
-<h1 id="a-few-other-puzzles">A Few Other Puzzles</h1>
-<h3 id="n-queens-bishops-and-rooks"><span class="math inline"><em>n</em></span> Queens, Bishops, and Rooks</h3>
+<h1 data-number="3" id="a-few-other-puzzles"><span class="header-section-number">3</span> A Few Other Puzzles</h1>
+<h2 data-number="3.1" id="n-queens-bishops-and-rooks"><span class="header-section-number">3.1</span> <span class="math inline"><em>n</em></span> Queens, Bishops, and Rooks</h2>
 <p>Now that we’re more familiar with how to write and compose rules, let’s look back and have some fun with the <span class="math inline"><em>n</em></span> queens problem. We’re going to express it differently this time, instead of mapping every column to a row with a queen, we’ll express it as mapping every cell on the board to whether or not there is a queen there, similar to how we mapped each cell of a Sudoku to a digit. This allows us some more flexibility, like decomposing <span class="math inline"><em>n</em></span> queens into <span class="math inline"><em>n</em></span> bishops and <span class="math inline"><em>n</em></span> rooks:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Square</span> <span class="ot">=</span> <span class="dt">Piece</span> <span class="op">|</span> <span class="dt">Empty</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>, <span class="dt">Bounded</span>, <span class="dt">Ix</span>, <span class="dt">Ord</span>, <span class="dt">Enum</span>)</span>
@@ -391,7 +391,7 @@ X . . . . . . .
 . . . . . X . .
 . . X . . . . .</code></pre>
 <p>And as expected, we get a proper solution again.</p>
-<h3 id="nti-knight-queens"><span class="math inline"><em>n</em></span>ti-knight Queens</h3>
+<h2 data-number="3.2" id="nti-knight-queens"><span class="header-section-number">3.2</span> <span class="math inline"><em>n</em></span>ti-knight Queens</h2>
 <p>Let’s take a lesson from the Sudoku variants, and consider a variant of <span class="math inline"><em>n</em></span> queens in which the queens also cannot be within a knight’s move from one another:</p>
 <pre><code>λ&gt; printSolution (showGrid showSquare) (solve (withSeen knight nonattacking &lt;&gt; nqueens2 @8) [])
 No Solutions</code></pre>
@@ -410,7 +410,7 @@ X . . . . . . . . .
 . . . . . . X . . .
 λ&gt; printSolution (showGrid showSquare) (solve (withSeen knight nonattacking &lt;&gt; nqueens2 @10) [((5, 5), Piece)])
 No solutions</code></pre>
-<h3 id="star-battle">Star Battle</h3>
+<h2 data-number="3.3" id="star-battle"><span class="header-section-number">3.3</span> Star Battle</h2>
 <p>And finally, my new favorite kind of puzzle: <a href="https://www.youtube.com/watch?v=w1DSgHiI6GQ">Star Battle</a>. In a Star Battle puzzle, the object is to place two stars in every row, column, and outlined region, such that no two stars touch, even diagonally.</p>
 <p>It may initially seem tricky to express the outlined regions, but it’s simply another <code>Sees</code> relation. Aside from that, we have all the tools we need to express the rules to star battle already.</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ot">starbattleRules ::</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">Sees</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="ot">-&gt;</span> <span class="dt">Rule</span> (<span class="dt">Finite</span> n, <span class="dt">Finite</span> n) <span class="dt">Square</span></span>
@@ -450,11 +450,11 @@ X . X . . . . . . .
 X . X . . . . . . .
 . . . . . X . X . .</code></pre>
 <p>And that’s how you solve a Star Battle.</p>
-<h1 id="conclusion">Conclusion</h1>
+<h1 data-number="4" id="conclusion"><span class="header-section-number">4</span> Conclusion</h1>
 <p>If there is a point to this post, it would be that simple higher-order functions can get you <em>really</em> far. We were able to write a solver for a large family of puzzles, almost entirely without ever writing a data type or type class. I’m leaving the story of why that might be a good thing for another time.</p>
 <p>Thanks for reading, criticism is welcome.</p>
-<p>Thanks to @<a href="https://github.com/cdepillabout/">cdepillabout</a>, @<a href="https://github.com/kayhide/">kayhide</a>, and @<a href="https://github.com/considerate">considerate</a> for proof-reading.</p>
-<h1 id="appendix-omitted-code">Appendix: Omitted Code</h1>
+<p>Thanks to <span class="citation" data-cites="cdepillabout">[@cdepillabout]</span>(https://github.com/cdepillabout/), <span class="citation" data-cites="kayhide">[@kayhide]</span>(https://github.com/kayhide/), and <span class="citation" data-cites="considerate">[@considerate]</span>(https://github.com/considerate) for proof-reading.</p>
+<h1 data-number="5" id="appendix-omitted-code"><span class="header-section-number">5</span> Appendix: Omitted Code</h1>
 <div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ot">printSolution ::</span> (<span class="dt">Solution</span> i a <span class="ot">-&gt;</span> <span class="dt">String</span>) <span class="ot">-&gt;</span> [<span class="dt">Solution</span> i a] <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>printSolution pp sols <span class="ot">=</span> <span class="fu">putStrLn</span> <span class="op">$</span> <span class="kw">case</span> sols <span class="kw">of</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  [] <span class="ot">-&gt;</span> <span class="st">&quot;No solutions&quot;</span></span>
