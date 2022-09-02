@@ -7,12 +7,16 @@ body {
   color:#444
 }
 
-img {
+img, svg {
   display: block;
   margin-left: auto;
   margin-right: auto;
   overflow: auto;
+  max-width: 90%;
 }
+
+div.light { display: block; }
+div.dark { display: none; }
 
 a:link    {
   text-decoration: none;
@@ -83,4 +87,6 @@ span.header-section-number {
   .toc .title { color: #aaa; }
   .sourceCode { color: #444; }
   .taglist { color: #aaa; }
+  div.light { display: none; }
+  div.dark { display: block; }
 }

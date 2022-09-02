@@ -21,6 +21,7 @@ for post in $POSTS; do
     --number-sections \
     --syntax-definition=static/nix-syntax.xml \
     -c ../style.css \
+    --lua-filter static/render_dot.lua \
     --include-before-body=static/back.html \
     --include-after-body=static/back.html \
     --include-after-body=static/footer.html \
@@ -59,4 +60,13 @@ EOM
 
 cp static/style.css $out
 cp static/CNAME $out
-cp -r assets/ $out
+ASSETS=$(find assets/ -type f)
+for asset in $ASSETS; do
+  mkdir -p $out/$(dirname $asset)
+  case $asset in
+    *.dot)
+      dot -T svg -o "$out/${asset%.dot}.svg" $asset;;
+    *)
+      cp $asset $out/$asset;;
+  esac
+done

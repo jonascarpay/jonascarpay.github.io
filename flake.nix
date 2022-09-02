@@ -10,7 +10,7 @@
       blog = pkgs.stdenv.mkDerivation {
         name = "blog";
         src = ./.;
-        buildInputs = [ pkgs.pandoc ];
+        buildInputs = [ pkgs.pandoc pkgs.graphviz ];
         builder = ./builder.sh;
       };
     in
@@ -22,6 +22,8 @@
       devShell = pkgs.mkShell {
         packages = [
           md-headerfmt.defaultPackage.${system}
+          pkgs.graphviz
+          pkgs.pandoc
         ];
       };
     });
