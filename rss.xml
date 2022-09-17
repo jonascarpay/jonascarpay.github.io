@@ -4,6 +4,16 @@
 		<link>https://jonascarpay.com</link>
 		<description>jonas's blog</description>
 		<item>
+			<title>A Comprehensive Guide to End-to-End-Declarative Deployment
+with Terraform and Nix</title>
+			<link>https://jonascarpay.com/posts/2022-09-19-declarative-deployment.html</link>
+			<guid isPermaLink="false">https://jonascarpay.com/posts/2022-09-19-declarative-deployment.html</guid>
+			<description>
+				Express your entire production pipeline in code; build, provision,
+    and deploy with a single command.
+			</description>
+		</item>
+		<item>
 			<title>Calligraphy tutorial</title>
 			<link>https://jonascarpay.com/posts/2022-04-26-calligraphy-tutorial.html</link>
 			<guid isPermaLink="false">https://jonascarpay.com/posts/2022-04-26-calligraphy-tutorial.html</guid>
