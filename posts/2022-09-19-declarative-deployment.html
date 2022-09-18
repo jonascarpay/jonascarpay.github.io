@@ -130,7 +130,7 @@
 </nav>
 <h1 data-number="1" id="introduction"><span class="header-section-number">1</span> Introduction</h1>
 <p>This is a guide to declarative nirvana: describing the desired end state of an entire production pipeline (building, provisioning, deploying, and everything in between) in code, and then materializing it with a single command. We achieve this by integrating two tools: <a href="https://www.terraform.io/">Terraform</a> and <a href="https://nixos.org/">Nix</a>.</p>
-<p>Terraform and Nix are both pieces of software whose success comes from their ability to provide a declarative interface to a procedural world. In the case of Nix, that world is software, and for Terraform, it’s hardware. Think of them this way and you can see how they fit together and combine into something greater than the sum of its parts.</p>
+<p>Terraform and Nix are both pieces of software whose success comes from their ability to provide a declarative interface to a procedural world. In the case of Nix, that world is software, and for Terraform, it’s hardware. Think of them this way and you can see how they fit together to become something greater than the sum of its parts.</p>
 <p>We’ll be exploring these ideas by building and deploying a simple web service to Amazon EC2. We start with a spartan approach to declarativity: changing a single line of code in the application will invalidate the entire downstream pipeline to the point that our tooling will propose provisioning new hardware. Once that’s done, we’ll look at how to tame this into something more ergonomic, while retaining all the benefits.</p>
 <h2 data-number="1.1" id="preliminaries"><span class="header-section-number">1.1</span> Preliminaries</h2>
 <p>This guide is written as a step-by-step tutorial, one that I’ve tried to keep approachable to people with limited Terraform or Nix experience. I try to err on the side of going in too much detail, but Nix and Terraform are both incredibly complex, and there are bound to be details important to you that I thought better to skip or leave implicit. If you’re confused at any point, you can always consult the <a href="https://github.com/jonascarpay/iplz">end result’s source code</a>.</p>
@@ -272,7 +272,7 @@
 </g>
 </svg>
 </div>
-<p>Our server runs an image, the image contains a NixOS configuration, the NixOS configuration contains our application. Change the application and you invalidate the configuration, invalidate the configuration and you invalidate the image, invalidate the image and you invalidate the server instance.</p>
+<p>Our server runs an image, the image contains a NixOS configuration, the NixOS configuration contains our application. Change the application and you invalidate the configuration. Invalidate the configuration and you invalidate the image. Invalidate the image and you invalidate the server instance.</p>
 <p>In this section, we’re working towards the code as it is on the <a href="https://github.com/jonascarpay/iplz"><code>master</code> branch</a> of the source repository. We’ll start with the Nix side of things, in particular the <a href="https://github.com/jonascarpay/iplz/blob/master/flake.nix"><code>flake.nix</code></a> file that defines how to build the application and image. For those following along step-by-step, I recommend using this as your scaffolding, and adding to it as you go along:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  inputs = {</span>
@@ -332,6 +332,33 @@
 
 $ curl localhost:8000
 127.0.0.1</code></pre>
+<p>For reference, the full <code>flake.nix</code> file should now look something like this:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  inputs = {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  };</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  outputs = inputs:</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      system = <span class="st">&quot;x86_64-linux&quot;</span>;</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      pkgs = <span class="bu">import</span> inputs.nixpkgs { <span class="kw">inherit</span> system; };</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      iplz-lib = pkgs.python3Packages.buildPythonPackage {</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        ...</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      };</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      iplz-server = pkgs.writeShellApplication {</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        ...</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      };</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">in</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    {</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>      packages.${system} = {</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">inherit</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>          iplz-server;</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      };</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 data-number="2.2" id="defining-an-image"><span class="header-section-number">2.2</span> Defining an image</h2>
 <p>The next step is to turn the application into a deployable image. Specifically, an image containing a NixOS installation configured to run <code>iplz</code> in the background as a <code>systemd</code> service.</p>
 <p>Nix has amazing tooling making for building all sorts of images, conveniently collected in <a href="https://github.com/nix-community/nixos-generators">the <code>nixos-generators</code> repository</a>. Because making different images is quick and easy, we’ll actually define <em>two</em> images:</p>
@@ -347,22 +374,22 @@ $ curl localhost:8000
 <li>open the required firewall ports,</li>
 <li>set <code>system.stateVersion</code>.</li>
 </ul>
-<div class="sourceCode" id="cb5"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>base-config = {</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  system.stateVersion = <span class="st">&quot;22.05&quot;</span>;</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  networking.firewall.allowedTCPPorts = [ <span class="dv">80</span> ];</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  systemd.services.iplz = {</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    enable = <span class="bu">true</span>;</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    wantedBy = [ <span class="st">&quot;multi-user.target&quot;</span> ];</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    after = [ <span class="st">&quot;network.target&quot;</span> ]</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    script = <span class="st">&#39;&#39;</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="st">      </span>${iplz-server}<span class="st">/bin/iplz-server --host 0.0.0.0 --port 80</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="st">    &#39;&#39;</span>;</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    serviceConfig = {</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      Restart = <span class="st">&quot;always&quot;</span>;</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      Type = <span class="st">&quot;simple&quot;</span>;</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    };</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  };</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>base-config = {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  system.stateVersion = <span class="st">&quot;22.05&quot;</span>;</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  networking.firewall.allowedTCPPorts = [ <span class="dv">80</span> ];</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  systemd.services.iplz = {</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    enable = <span class="bu">true</span>;</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    wantedBy = [ <span class="st">&quot;multi-user.target&quot;</span> ];</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    after = [ <span class="st">&quot;network.target&quot;</span> ];</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    script = <span class="st">&#39;&#39;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="st">      </span>${iplz-server}<span class="st">/bin/iplz-server --host 0.0.0.0 --port 80</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="st">    &#39;&#39;</span>;</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    serviceConfig = {</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>      Restart = <span class="st">&quot;always&quot;</span>;</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>      Type = <span class="st">&quot;simple&quot;</span>;</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  };</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>If this were an actual production machine this would be quite bare in terms of user, SSH, and security setup, but for now it will do nicely.</p>
 <blockquote>
 <h4 id="stateVersion" class="unnumbered"><code>system.stateVersion</code></h4>
@@ -375,19 +402,19 @@ $ curl localhost:8000
 </blockquote>
 <h3 data-number="2.2.2" id="iplz-vm"><span class="header-section-number">2.2.2</span> QEMU VM</h3>
 <p>For our QEMU image we add some configuration so that we automatically log in as <code>root</code>, plus we open a port so we can actually test the service from the host:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>qemu-config = {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  services.getty.autologinUser = <span class="st">&quot;root&quot;</span>;</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  virtualisation.forwardPorts = [{ from = <span class="st">&quot;host&quot;</span>; host.port = <span class="dv">8001</span>; guest.port = <span class="dv">80</span>; }];</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>qemu-config = {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  services.getty.autologinUser = <span class="st">&quot;root&quot;</span>;</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  virtualisation.forwardPorts = [{ from = <span class="st">&quot;host&quot;</span>; host.port = <span class="dv">8001</span>; guest.port = <span class="dv">80</span>; }];</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>And finally, we turn it into a derivation for an actually runnable QEMU image:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>iplz-vm = inputs.nixos-generators.nixosGenerate {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> pkgs;</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  format = <span class="st">&quot;vm&quot;</span>;</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    base-config</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    qemu-config</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  ];</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>iplz-vm = inputs.nixos-generators.nixosGenerate {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> pkgs;</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  format = <span class="st">&quot;vm&quot;</span>;</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    base-config</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    qemu-config</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  ];</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>If you add <code>iplz-vm</code> to the <code>flake.nix</code> outputs, you should now be able to run the VM using:</p>
 <pre><code>$ nix run .#iplz-vm</code></pre>
 <p>If all is well, you’re now looking at a TTY session, and you should be able to <code>curl</code> into the VM from the host:</p>
@@ -395,19 +422,19 @@ $ curl localhost:8000
 10.0.2.2</code></pre>
 <h3 data-number="2.2.3" id="iplz-ami"><span class="header-section-number">2.2.3</span> Amazon AMI</h3>
 <p>Now that we have been able to confirm that the NixOS configuration is what we want, it’s time to turn it into an EC2-compatible AMI image. Doing so is easy; just change the <code>format</code> attribute from <code>vm</code> to <code>amazon</code>, and remove the <code>qemu-config</code> module. The only minor annoyance is administrative: the default filename of the image contains a hash, so we add a module (here called <code>ami-config</code>) to manually fix the filename to something more predictable using the <code>amazonImage.name</code> option.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>image-name = <span class="st">&quot;iplz&quot;</span>;</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>ami-config = {</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  amazonImage.name = image-name;</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>};</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>iplz-ami = inputs.nixos-generators.nixosGenerate {</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> pkgs;</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  format = <span class="st">&quot;amazon&quot;</span>;</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    base-config</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    ami-config</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  ];</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>};</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>ami-path = <span class="st">&quot;</span>${iplz-ami}<span class="st">/</span>${image-name}<span class="st">.vhd&quot;</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>image-name = <span class="st">&quot;iplz&quot;</span>;</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ami-config = {</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  amazonImage.name = image-name;</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>};</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>iplz-ami = inputs.nixos-generators.nixosGenerate {</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> pkgs;</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  format = <span class="st">&quot;amazon&quot;</span>;</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    base-config</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    ami-config</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  ];</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>};</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>ami-path = <span class="st">&quot;</span>${iplz-ami}<span class="st">/</span>${image-name}<span class="st">.vhd&quot;</span>;</span></code></pre></div>
 <p>That’s it, building <code>iplz-ami</code> should now give you an AMI image.</p>
 <h2 data-number="2.3" id="the-nix-terraform-interface"><span class="header-section-number">2.3</span> The Nix-Terraform interface</h2>
 <p>The next question is how to get our Nix outputs to be Terraform inputs, or as Terraform calls them, variables. This part is important, because if we get the boundary between Nix and Terraform right, magic happens: changes in Nix will propagate through to Terraform, where they show up as changes to the variables, and once Terraform sees a change in a variable it will in turn invalidate its downstream resources, giving us what we’re here for: end-to-end declarativity.</p>
@@ -421,22 +448,22 @@ $ curl localhost:8000
 <p>Whatever option you choose, after you’ve set it up, changing something in the upstream application should invalidate your shell/executable and build a new AMI.</p>
 <h3 data-number="2.3.1" id="option-1-shell-variable"><span class="header-section-number">2.3.1</span> Option 1: Shell variable</h3>
 <p>Define the shell as follows:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>deploy-shell = pkgs.mkShell {</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  packages = [ pkgs.terraform ];</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  TF_VAR_iplz_ami_path = ami-path;</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>deploy-shell = pkgs.mkShell {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  packages = [ pkgs.terraform ];</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  TF_VAR_iplz_ami_path = ami-path;</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>In your <code>flake.nix</code>, add this to your flake output attributes, so on the same level as <code>packages.${system}</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>devShell.${system} = deploy-shell;</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>devShell.${system} = deploy-shell;</span></code></pre></div>
 <p>You can now enter the shell using <code>nix develop</code>:</p>
 <pre><code>$ nix develop
 (nix-shell) $ echo $TF_VAR_iplz_ami_path
 /nix/store/wz4f6yypxrwxn3glqxi73rd9xdyp12gq-iplz-x86_64-linux/iplz-x86_64-linux.vhd</code></pre>
 <h3 data-number="2.3.2" id="option-2-wrapped-executable"><span class="header-section-number">2.3.2</span> Option 2: Wrapped executable</h3>
 <p>Define the executable as follows:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>terraform = pkgs.writeShellScriptBin <span class="st">&quot;terraform&quot;</span> <span class="st">&#39;&#39;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="st">  export TF_VAR_iplz_ami_path=&quot;</span>${ami-path}<span class="st">&quot;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="st">  </span>${pkgs.terraform}<span class="st">/bin/terraform $@</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;&#39;</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>terraform = pkgs.writeShellScriptBin <span class="st">&quot;terraform&quot;</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="st">  export TF_VAR_iplz_ami_path=&quot;</span>${ami-path}<span class="st">&quot;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="st">  </span>${pkgs.terraform}<span class="st">/bin/terraform $@</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;&#39;</span>;</span></code></pre></div>
 <p>Now add <code>terraform</code> to your outputs under <code>packages.${system}</code>. You should now be able to execute the wrapped Terraform with:</p>
 <pre><code>$ nix run .#terraform -- version
 Terraform v1.2.7
@@ -765,72 +792,72 @@ on linux_amd64</code></pre>
 <h3 data-number="2.4.1" id="terraform-resources"><span class="header-section-number">2.4.1</span> Terraform resources</h3>
 <h4 data-number="2.4.1.1" id="aws_instance"><span class="header-section-number">2.4.1.1</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance"><code>aws_instance</code></a></h4>
 <p>This is the final EC2 instance, the thing that everything else is here to enable. Terraform and AWS disagree about the default security group behavior, so we explicitly define one. In fact, I find that with Terraform it’s often best to be explicit. Other than that, there’s not much here:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  ami                    = aws_ami.iplz_ami.id</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  instance_type          = <span class="st">&quot;t2.micro&quot;</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  vpc_security_group_ids = [aws_security_group.iplz_security_group.id]</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  ami                    = aws_ami.iplz_ami.id</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  instance_type          = <span class="st">&quot;t2.micro&quot;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  vpc_security_group_ids = [aws_security_group.iplz_security_group.id]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.2" id="aws_security_group"><span class="header-section-number">2.4.1.2</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group"><code>aws_security_group</code></a></h4>
 <p>What connectivity to allow. We only need TCP port 80 for now, if you’re using the <a href="#firewall">NixOS firewall</a> you could also leave this completely open. Either way, Terraform and AWS seem to disagree about what the default settings are, so it’s safest to be explicit here.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_security_group&quot;</span> <span class="st">&quot;iplz_security_group&quot;</span> {</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  ingress {</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    from_port   = <span class="dv">80</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    to_port     = <span class="dv">80</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    protocol    = <span class="st">&quot;tcp&quot;</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    cidr_blocks = [<span class="st">&quot;0.0.0.0/0&quot;</span>]</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_security_group&quot;</span> <span class="st">&quot;iplz_security_group&quot;</span> {</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  ingress {</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    from_port   = <span class="dv">80</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    to_port     = <span class="dv">80</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    protocol    = <span class="st">&quot;tcp&quot;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    cidr_blocks = [<span class="st">&quot;0.0.0.0/0&quot;</span>]</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.3" id="aws_ami"><span class="header-section-number">2.4.1.3</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ami"><code>aws_ami</code></a></h4>
 <p>As you can see, we turn the snapshot back into a usable AMI by passing it as the base for an EBS. Nix <a href="https://github.com/NixOS/nixpkgs/blob/b207142dcc285f985ae6419df914262debeef12a/nixos/modules/virtualisation/amazon-image.nix#L35">forces you to use <code>hvm</code></a> here, so there’s no question about what virtualization type to use.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_ami&quot;</span> <span class="st">&quot;iplz_ami&quot;</span> {</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  name                = <span class="st">&quot;iplz_server_ami&quot;</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  virtualization_type = <span class="st">&quot;hvm&quot;</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  root_device_name    = <span class="st">&quot;/dev/xvda&quot;</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  ebs_block_device {</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    device_name = <span class="st">&quot;/dev/xvda&quot;</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    snapshot_id = aws_ebs_snapshot_import.iplz_import.id</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_ami&quot;</span> <span class="st">&quot;iplz_ami&quot;</span> {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  name                = <span class="st">&quot;iplz_server_ami&quot;</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  virtualization_type = <span class="st">&quot;hvm&quot;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  root_device_name    = <span class="st">&quot;/dev/xvda&quot;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  ebs_block_device {</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    device_name = <span class="st">&quot;/dev/xvda&quot;</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    snapshot_id = aws_ebs_snapshot_import.iplz_import.id</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.4" id="aws_ebs_snapshot_import"><span class="header-section-number">2.4.1.4</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_snapshot_import"><code>aws_ebs_snapshot_import</code></a></h4>
 <p>Plumbing to get the image out of S3 and into EBS<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. This doesn’t automatically invalidate when the image changes, so we manually add a trigger for it. Importing a VM on AWS requires special permissions, so we have to define <a href="#aws_iam_role">a special role</a> for it.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_ebs_snapshot_import&quot;</span> <span class="st">&quot;iplz_import&quot;</span> {</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  role_name = aws_iam_role.vmimport_role.id</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  disk_container {</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    format = <span class="st">&quot;VHD&quot;</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    user_bucket {</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>      s3_bucket = aws_s3_bucket.iplz_bucket.id</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>      s3_key    = aws_s3_object.image_upload.id</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  lifecycle {</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    replace_triggered_by = [</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>      aws_s3_object.image_upload</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_ebs_snapshot_import&quot;</span> <span class="st">&quot;iplz_import&quot;</span> {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  role_name = aws_iam_role.vmimport_role.id</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  disk_container {</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    format = <span class="st">&quot;VHD&quot;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    user_bucket {</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>      s3_bucket = aws_s3_bucket.iplz_bucket.id</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>      s3_key    = aws_s3_object.image_upload.id</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  lifecycle {</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    replace_triggered_by = [</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>      aws_s3_object.image_upload</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.5" id="aws_iam_role"><span class="header-section-number">2.4.1.5</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role"><code>aws_iam_role</code></a>, <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy"><code>aws_iam_policy</code></a>, and <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment"><code>aws_iam_role_policy_attachment</code></a></h4>
 <p>The goal with these resources is to ultimate run <a href="#aws_ebs_snapshot_import"><code>aws_ebs_snapshot_import</code></a> with the permissions required to import a VM snapshot. IAM is an extremely complex topic in and of itself, and the Terraform interface to it doesn’t always make it easier to figure out what’s going on. The source code is too long to include here verbatim, but the gist is that we simply capture the <a href="https://docs.aws.amazon.com/vm-import/latest/userguide/required-permissions.html#vmimport-role">service role configuration describe here</a> in Terraform objects. At the time of writing, the recommended way of doing that is by putting the role configuration in an <code>aws_iam_role</code>, the policy configuration in an <code>aws_iam_policy</code>, and then attaching the policy to the role with an <code>iam_role_policy_attachment</code>.</p>
 <h4 data-number="2.4.1.6" id="aws_s3_bucket"><span class="header-section-number">2.4.1.6</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket"><code>aws_s3_bucket</code></a></h4>
 <p>An S3 bucket. Access configuration is handled by <a href="#aws_s3_bucket_acl"><code>aws_s3_bucket_acl</code></a>, uploading is handled by <a href="#aws_s3_object"><code>aws_s3_object</code></a>, leaving no configuration to go here.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_s3_bucket&quot;</span> <span class="st">&quot;iplz_bucket&quot;</span> {}</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_s3_bucket&quot;</span> <span class="st">&quot;iplz_bucket&quot;</span> {}</span></code></pre></div>
 <h4 data-number="2.4.1.7" id="aws_s3_bucket_acl"><span class="header-section-number">2.4.1.7</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_acl"><code>aws_s3_bucket_acl</code></a></h4>
 <p>The bucket’s <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html">access control list</a>. ACLs are a mess, but <code>"private"</code> should be fine for most purposes.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_s3_bucket_acl&quot;</span> <span class="st">&quot;iplz_acl&quot;</span> {</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  bucket = aws_s3_bucket.iplz_bucket.id</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  acl    = <span class="st">&quot;private&quot;</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_s3_bucket_acl&quot;</span> <span class="st">&quot;iplz_acl&quot;</span> {</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  bucket = aws_s3_bucket.iplz_bucket.id</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  acl    = <span class="st">&quot;private&quot;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.8" id="aws_s3_object"><span class="header-section-number">2.4.1.8</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object"><code>aws_s3_object</code></a></h4>
 <p>Facilitates the uploading of the AMI to S3.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_s3_object&quot;</span> <span class="st">&quot;image_upload&quot;</span> {</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  bucket = aws_s3_bucket.iplz_bucket.id</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  key    = <span class="st">&quot;iplz.ami&quot;</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  source = var.iplz_ami_path</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_s3_object&quot;</span> <span class="st">&quot;image_upload&quot;</span> {</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  bucket = aws_s3_bucket.iplz_bucket.id</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  key    = <span class="st">&quot;iplz.ami&quot;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  source = var.iplz_ami_path</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 data-number="2.5" id="deployment"><span class="header-section-number">2.5</span> Deployment</h2>
 <p>First, if you haven’t already,</p>
 <ol type="1">
-<li>make sure you <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration">set up AWS authentication</a>,</li>
-<li>initialize Terraform with <code>nix run .#terraform init</code>.</li>
+<li>Make sure you <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration">set up AWS authentication</a>. You can set it up through Terraform, or in any one of the many ways supported by <code>aws-cli</code>.</li>
+<li>Initialize Terraform with <code>nix run .#terraform init</code>.</li>
 </ol>
 <p>Confirm that you’re ready to deploy by looking at the execution plan. It should look a lot like this:</p>
 <pre class="console"><code>$ nix run .#terraform plan
@@ -867,7 +894,7 @@ Do you want to perform these actions?
 <p>After waiting for deployment to finish and giving the server some time too boot up, you should now be able to query it and get back your public IP:</p>
 <pre class="console"><code>$ curl $(nix run .#terraform -- output -raw public_ip)
 12.34.56.78</code></pre>
-<p>It took some effort, but we were finally able to deliver of the goal of building, provisioning, and deploying with a single command! Don’t forget to <code>nix run .#terraform destroy</code> after you’re done.</p>
+<p>It took some effort, but we were finally able to deliver of the goal of building, provisioning, and deploying with a single command! Also, don’t forget to <code>nix run .#terraform destroy</code> after you’re done. Depending on your plan you might get charged if you accidentally leave your server running.</p>
 <h3 data-number="2.5.1" id="redeployment"><span class="header-section-number">2.5.1</span> Redeployment</h3>
 <p>At this point, it’s a good exercise to see what happens if you change the application. Any change works, for example, having the response be <code>"Your IP is &lt;ip&gt;"</code>.</p>
 <p>Now, running <code>nix run .#terraform apply</code> should first rebuild the AMI, and then present you with a list of changes:</p>
@@ -1058,33 +1085,33 @@ Plan: 3 to add, 1 to change, 3 to destroy.</code></pre>
 </ul>
 <h3 data-number="3.1.1" id="splitting-the-configuration-description"><span class="header-section-number">3.1.1</span> Splitting the configuration description</h3>
 <p>This part is simple. Looking at our <a href="#base-config">base NixOS configuration module above</a>, you can see that with the exception of the <code>system.stateVersion</code> option<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, everything here is application-specific. In other words, this is a perfectly good bootstrap configuration:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>bootstrap-config-module = {</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  system.stateVersion = <span class="st">&quot;22.05&quot;</span>;</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
-<p>The only thing to add is SSH access, so that we can actually talk to our server after instantiation. The complete bootstrap configuration module looks like this:</p>
 <div class="sourceCode" id="cb28"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>bootstrap-config-module = {</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  system.stateVersion = <span class="st">&quot;22.05&quot;</span>;</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  services.openssh.enable = <span class="bu">true</span>;</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  users.users.root.openssh.authorizedKeys.keys = [</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    &lt;public keys&gt;</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  ];</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<p>The only thing to add is SSH access, so that we can actually talk to our server after instantiation. The complete bootstrap configuration module looks like this:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>bootstrap-config-module = {</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  system.stateVersion = <span class="st">&quot;22.05&quot;</span>;</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  services.openssh.enable = <span class="bu">true</span>;</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  users.users.root.openssh.authorizedKeys.keys = [</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    &lt;public keys&gt;</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  ];</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>The live configuration module is then just the base configuration module minus <code>system.stateVersion</code>:</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>live-config-module = {</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  networking.firewall.allowedTCPPorts = [ <span class="dv">80</span> ];</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  systemd.services.iplz = {</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    enable = <span class="bu">true</span>;</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    wantedBy = [ <span class="st">&quot;multi-user.target&quot;</span> ];</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    after = [ <span class="st">&quot;network.target&quot;</span> ];</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    script = <span class="st">&#39;&#39;</span></span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="st">      </span>${iplz-server}<span class="st">/bin/iplz-server --host 0.0.0.0 --port 80</span></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="st">    &#39;&#39;</span>;</span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    serviceConfig = {</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>      Restart = <span class="st">&quot;always&quot;</span>;</span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>      Type = <span class="st">&quot;simple&quot;</span>;</span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    };</span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  };</span>
-<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>live-config-module = {</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  networking.firewall.allowedTCPPorts = [ <span class="dv">80</span> ];</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  systemd.services.iplz = {</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    enable = <span class="bu">true</span>;</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    wantedBy = [ <span class="st">&quot;multi-user.target&quot;</span> ];</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    after = [ <span class="st">&quot;network.target&quot;</span> ];</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    script = <span class="st">&#39;&#39;</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="st">      </span>${iplz-server}<span class="st">/bin/iplz-server --host 0.0.0.0 --port 80</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="st">    &#39;&#39;</span>;</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    serviceConfig = {</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>      Restart = <span class="st">&quot;always&quot;</span>;</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>      Type = <span class="st">&quot;simple&quot;</span>;</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    };</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>  };</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <blockquote>
 <h4 id="cloud-init-and-ssh-access" class="unnumbered"><code>cloud-init</code> and SSH Access</h4>
 <p>If you make an AMI using <code>nixos-generators</code> the way we have so far, the NixOS configuration will contain <a href="https://github.com/canonical/cloud-init"><code>cloud-init</code></a>. <code>cloud-init</code> is a standard interface for the initialization of OSes on cloud machines. Among other things, <code>cloud-init</code> provides a way to configure a machine with SSH keys. Terraform exposes this through the <code>aws_instance</code> resource’s <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance#key_name"><code>key_name</code> argument</a>.</p>
@@ -1092,23 +1119,23 @@ Plan: 3 to add, 1 to change, 3 to destroy.</code></pre>
 </blockquote>
 <h3 data-number="3.1.2" id="splitting-the-configuration-derivation"><span class="header-section-number">3.1.2</span> Splitting the configuration derivation</h3>
 <p>This next part is going to be slightly trickier. The bootstrap configuration will still be distributed as an AMI image, which simply looks like this:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>bootstrap-ami = inputs.nixos-generators.nixosGenerate {</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> pkgs;</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  format = <span class="st">&quot;amazon&quot;</span>;</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    bootstrap-config-module</span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    { amazonImage.name = bootstrap-ami-name; }</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  ];</span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
-<p>For the live configuration however, we don’t want to copy the AMI image itself, we want to copy over the image’s <em>contents</em>. Getting the derivation for those contents is a bit finicky, since it’s not designed to be done manually. It’s usually taken care of automatically by <code>nixos-rebuild</code> (if you’re on NixOS) or <code>nixos-generators</code> (if you’re making an image, as we’ve been doing up until now). Here’s what that looks like:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>live-config = (inputs.nixpkgs.lib.nixosSystem {</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> system;</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    bootstrap-config-module</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    live-config-module</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;</span>${inputs.nixpkgs}<span class="st">/nixos/modules/virtualisation/amazon-image.nix&quot;</span></span>
+<div class="sourceCode" id="cb31"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>bootstrap-ami = inputs.nixos-generators.nixosGenerate {</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> pkgs;</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  format = <span class="st">&quot;amazon&quot;</span>;</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    bootstrap-config-module</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    { amazonImage.name = bootstrap-ami-name; }</span>
 <span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  ];</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>}).config.system.build.toplevel;</span></code></pre></div>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<p>For the live configuration however, we don’t want to copy the AMI image itself, we want to copy over the image’s <em>contents</em>. Getting the derivation for those contents is a bit finicky, since it’s not designed to be done manually. It’s usually taken care of automatically by <code>nixos-rebuild</code> (if you’re on NixOS) or <code>nixos-generators</code> (if you’re making an image, as we’ve been doing up until now). Here’s what that looks like:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>live-config = (inputs.nixpkgs.lib.nixosSystem {</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inherit</span> system;</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  modules = [</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    bootstrap-config-module</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    live-config-module</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;</span>${inputs.nixpkgs}<span class="st">/nixos/modules/virtualisation/amazon-image.nix&quot;</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  ];</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>}).config.system.build.toplevel;</span></code></pre></div>
 <p>Other than that we’ve added <code>live-config-module</code> there are basically just two changes here compared to how we built the AMI previously:</p>
 <ol type="1">
 <li><p>Instead of using <code>nixosGenerate</code>, we use <code>lib.nixosSystem</code>, and then navigate to the <code>.config.system.build.toplevel</code> attribute of the result.</p></li>
@@ -1116,20 +1143,20 @@ Plan: 3 to add, 1 to change, 3 to destroy.</code></pre>
 </ol>
 <p>If you change <code>toplevel</code> to <code>amazonImage</code>, you’ve actually completely replicated the <code>nixosGenerate</code> functionality, and you’re back to building an AMI! If you’ve come this far, it’s actually worth considering dropping <code>nixos-generators</code> altogether, and manually implementing the same functionality. You lose a bit of readability, but gain a bit of transparency, and it’s good practice with NixOS nuts and bolts. At the very least, I recommend studying the <code>nixos-generators</code> source code, since it doesn’t actually do that much.</p>
 <p>Anyway, with the bootstrap image and live configuration defined, we can pass them to Terraform as input variables. So, if you’re using a shell:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>deploy-shell = pkgs.mkShell {</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  packages = [ pkgs.terraform ];</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  TF_VAR_bootstrap_ami_path = bootstrap-ami-path;</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  TF_VAR_live_config_path = <span class="st">&quot;</span>${live-config}<span class="st">&quot;</span>;</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>deploy-shell = pkgs.mkShell {</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  packages = [ pkgs.terraform ];</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  TF_VAR_bootstrap_ami_path = bootstrap-ami-path;</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  TF_VAR_live_config_path = <span class="st">&quot;</span>${live-config}<span class="st">&quot;</span>;</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>};</span></code></pre></div>
 <p>And if you’re using a wrapped executable:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>terraform = pkgs.writeShellScriptBin <span class="st">&quot;terraform&quot;</span> <span class="st">&#39;&#39;</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="st">  export TF_VAR_bootstrap_ami_path=&quot;</span>${bootstrap-ami-path}<span class="st">&quot;</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="st">  export TF_VAR_live_config_path=&quot;</span>${live-config}<span class="st">&quot;</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="st">  </span>${pkgs.terraform}<span class="st">/bin/terraform $@</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;&#39;</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>terraform = pkgs.writeShellScriptBin <span class="st">&quot;terraform&quot;</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="st">  export TF_VAR_bootstrap_ami_path=&quot;</span>${bootstrap-ami-path}<span class="st">&quot;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="st">  export TF_VAR_live_config_path=&quot;</span>${live-config}<span class="st">&quot;</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="st">  </span>${pkgs.terraform}<span class="st">/bin/terraform $@</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;&#39;</span>;</span></code></pre></div>
 <p>Remember to also declare these in Terraform.</p>
 <h2 data-number="3.2" id="creating-the-deployment-resource"><span class="header-section-number">3.2</span> Creating the deployment resource</h2>
-<p>Switching to a new NixOS configuration, operationally, requires two steps: uploading the configuration, and then activating it. Our goal here is to capture this process in a Terraform resource, such that it happens automatically whenever our configuration changes. There’s also a few smaller tweaks and workarounds we need, mostly just to make everything SSH-based scripts run smoothly.</p>
+<p>Switching to a new NixOS configuration, operationally, requires two steps: uploading the configuration, and then activating it. Our goal here is to capture this process in a Terraform resource, such that it happens automatically whenever our configuration changes. There’s also a few smaller tweaks and workarounds we need, mostly just to make everything SSH-based run smoothly.</p>
 <h3 data-number="3.2.1" id="copying-and-activating-with-null_resource"><span class="header-section-number">3.2.1</span> Copying and activating with <code>null_resource</code></h3>
 <p>You copy Nix paths from one computer to another with <code>nix-copy-closure</code>. From <a href="https://nixos.org/manual/nix/unstable/command-ref/nix-copy-closure.html">the <code>man</code> page</a>:</p>
 <blockquote>
@@ -1137,64 +1164,64 @@ Plan: 3 to add, 1 to change, 3 to destroy.</code></pre>
 </blockquote>
 <p>This is exactly what we need, and has the additional benefit of only ever copying the parts of the configuration that have changed.</p>
 <p>Once the configuration has been copied, we SSH into the instance, and call the <code>switch_to_configuration</code> script in the configuration root. We’ll also run garbage collection afterwards, since for the purposes of this guide, at least, this is the only time we’ll ever create garbage.</p>
-<p>The star of the show on the Terraform side of things is the <a href="https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource"><code>null_resource</code></a>. Its use case is to run a set of scripts (Terraform calls them provisioners) when one of its inputs or triggers changes<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, which is exactly what we want.</p>
+<p>The star of the show on the Terraform side of things is the <a href="https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource"><code>null_resource</code></a>. Its use case is to run a set of scripts (Terraform calls them provisioners) when one of its inputs or triggers changes<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, which is exactly what we want. Because it depends on the server instance’s <code>public_ip</code> attribute, it will automatically only run <em>after</em> provisioning.</p>
 <p>Putting it all together looks like this:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;null_resource&quot;</span> <span class="st">&quot;nixos_live_config&quot;</span> {</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  triggers = {</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    live_config_path = var.live_config_path</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  provisioner <span class="st">&quot;local-exec&quot;</span> {</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    command = &lt;&lt;-EOT</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>      nix-copy-closure $TARGET ${var.live_config_path}</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>      ssh $TARGET &#39;${var.live_config_path}/bin/switch-to-configuration switch &amp;&amp; nix-collect-garbage&#39;</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>      EOT</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    environment = {</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>      TARGET = <span class="st">&quot;root@</span>${aws_instance.iplz_server.public_ip}<span class="st">&quot;</span></span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;null_resource&quot;</span> <span class="st">&quot;nixos_live_config&quot;</span> {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  triggers = {</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    live_config_path = var.live_config_path</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  provisioner <span class="st">&quot;local-exec&quot;</span> {</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    command = &lt;&lt;-EOT</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>      nix-copy-closure $TARGET ${var.live_config_path}</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>      ssh $TARGET &#39;${var.live_config_path}/bin/switch-to-configuration switch &amp;&amp; nix-collect-garbage -d&#39;</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>      EOT</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    environment = {</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>      TARGET = <span class="st">&quot;root@</span>${aws_instance.iplz_server.public_ip}<span class="st">&quot;</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h3 data-number="3.2.2" id="ssh-ingress-rule"><span class="header-section-number">3.2.2</span> SSH ingress rule</h3>
 <p>In order to get SSH access to our instance, we also need to define a new <code>ingress</code> rule for port 22, in the same way as we opened port 80 for HTTP traffic. Just duplicate <a href="#aws_security_group">the <code>ingress</code> block</a> and change the port number.</p>
 <h3 data-number="3.2.3" id="timing-issues"><span class="header-section-number">3.2.3</span> Timing issues</h3>
 <p>If you run <code>terraform apply</code> in its current state, you’ll find that the null resource fails with an SSH timeout. The issue is that Terraform will wait until the instance is <em>provisioned</em>, but not until it’s actually <em>booted</em>. This is a common issue, with a pretty simple workaround: we simply add a <code>remote_exec</code> provisioner that immediately returns. <code>remote_exec</code> will automatically retry until SSH is up, thereby also delaying downstream resources until SSH works.</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  provisioner <span class="st">&quot;remote-exec&quot;</span> {</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    connection {</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>      host = self.public_ip</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>      private_key = file(<span class="st">&quot;~/.ssh/id_ed25519&quot;</span>) <span class="co"># &lt;- Change this</span></span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    inline = [ <span class="st">&quot;echo &#39;SSH confirmed!&#39;&quot;</span> ]</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<h3 data-number="3.2.4" id="automatically-adding-the-instance-to-known_hosts"><span class="header-section-number">3.2.4</span> Automatically adding the instance to <code>known_hosts</code></h3>
-<p>The final issue with SSH access is that when <code>nix-copy-closure</code> connects to the instance, SSH will give the usual prompt asking the user to confirm that the target is a trusted machine. The interactive prompt doesn’t play nice with Terraform, and even if it did, it’s annoying, so let’s make it so we don’t have to. The most robust way to do so is to first add the server to <code>~/.ssh/known_hosts</code> using a <code>local_exec</code> provisioner in the <code>aws_instance</code>:</p>
 <div class="sourceCode" id="cb36"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  provisioner <span class="st">&quot;local-exec&quot;</span> {</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    command = <span class="st">&quot;ssh-keyscan </span>${self.public_ip}<span class="st"> &gt;&gt; ~/.ssh/known_hosts&quot;</span></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  provisioner <span class="st">&quot;remote-exec&quot;</span> {</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    connection {</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>      host = self.public_ip</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>      private_key = file(<span class="st">&quot;~/.ssh/id_ed25519&quot;</span>) <span class="co"># &lt;- Change this</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    inline = [ <span class="st">&quot;echo &#39;SSH confirmed!&#39;&quot;</span> ]</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 data-number="3.2.4" id="automatically-adding-the-instance-to-known_hosts"><span class="header-section-number">3.2.4</span> Automatically adding the instance to <code>known_hosts</code></h3>
+<p>The final issue with SSH access is that when <code>nix-copy-closure</code> connects to the instance, SSH will give the usual prompt asking the user to confirm that the target is a trusted machine. The interactive prompt doesn’t play nice with Terraform, and even if it did, it’s annoying, so let’s make it so we don’t have to. The most robust way to do so is to first add the server to <code>~/.ssh/known_hosts</code> using a <code>local_exec</code> provisioner in the <code>aws_instance</code>:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  provisioner <span class="st">&quot;local-exec&quot;</span> {</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    command = <span class="st">&quot;ssh-keyscan </span>${self.public_ip}<span class="st"> &gt;&gt; ~/.ssh/known_hosts&quot;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 data-number="3.3" id="deployment-1"><span class="header-section-number">3.3</span> Deployment</h2>
-<p>If you change your application and run <code>nix run .#terraform apply</code>, it should look something like this:</p>
+<p>Deployment itself should look similar to how it did before, just with one extra resource. The gains we’ve made become very apparent when redeploying, however. If you change your application and run <code>nix run .#terraform apply</code>, it should now look something like this:</p>
 <pre><code>  # null_resource.nixos_live_config must be replaced
 -/+ resource &quot;null_resource&quot; &quot;nixos_live_config&quot; { ... }
 
 Plan: 1 to add, 0 to change, 1 to destroy.</code></pre>
-<p>As you can see, compared to <a href="#redeployment">before</a>, this only touches the <code>nixos_live_config</code> resource. Applying should take significantly less time now, and leave the instance itself in place.</p>
-<p>Again, the final resulting source code can be found on the <a href="https://github.com/jonascarpay/iplz/tree/faster-deployment"><code>faster-deployment</code> branch</a>.</p>
+<p>Compared to <a href="#redeployment">before</a>, this only touches the <code>nixos_live_config</code> resource. Applying should take significantly less time now, and leave the instance itself in place.</p>
+<p>Again, the final resulting source code can be found on the <a href="https://github.com/jonascarpay/iplz/tree/faster-deployment"><code>faster-deployment</code> branch</a>. As always, don’t forget to run <code>terraform destroy</code>!</p>
 <h1 data-number="4" id="where-to-go-from-here"><span class="header-section-number">4</span> Where to go from here</h1>
 <p>If you’ve made it this far, and this guide has been of value to you, here are some suggestions for how to continue the development of your deployment pipeline.</p>
 <h2 data-number="4.1" id="removing-the-remaining-sources-of-invalidation"><span class="header-section-number">4.1</span> Removing the remaining sources of invalidation</h2>
 <p>Despite our efforts to isolate changes to the live configuration, any accidental changes to the bootstrap AMI still invalidate all instances using it. One example of this is when you update <code>nixpkgs</code>, and then instead of simply proposing a new live config, <code>terraform apply</code> proposes completely reprovisioning. This is extra annoying because once you have a live configuration up and running, the bootstrap AMI doesn’t have any bearing on the running instance anymore.</p>
 <p>One way to mitigate this is to use a separate <code>nixpkgs</code> pin for the bootstrap and live configurations, but this doesn’t completely protect you from accidental invalidation. My preferred solution is to actually make the instance completely ignore all changes to its inputs once provisioned:</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  lifecycle {</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    ignore_changes = all</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_instance&quot;</span> <span class="st">&quot;iplz_server&quot;</span> {</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  lifecycle {</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    ignore_changes = all</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Unlike the <code>nixos_live_config</code> resource, the inputs to the instance are only relevant during provisioning, so this is completely safe.</p>
 <p>You can also consider completely dropping the bootstrap image. If you let Terraform/<code>cloud_init</code> handle SSH setup you can simply pull a NixOS image from the AMI registry and pass that as the AMI. After you’ve pushed a new live configuration, the bootstrap configuration doesn’t matter anymore. This also saves you the trouble of setting up an S3 bucket just to bootstrap your server. Personally, I like the control that having my own image provides, but both approaches are valid.</p>
 <h2 data-number="4.2" id="have-nix-manage-terraform-providers"><span class="header-section-number">4.2</span> Have Nix manage Terraform providers</h2>
@@ -1205,6 +1232,7 @@ Plan: 1 to add, 0 to change, 1 to destroy.</code></pre>
 <p>Over at <a href="https://github.com/binplz/binplz.dev"><code>binplz.dev</code></a>, we’re experimenting with <a href="https://github.com/binplz/binplz.dev/tree/master/secrets">commiting all secrets to git</a> in encrypted form, and using <a href="https://github.com/FiloSottile/age">age</a>-based <a href="https://github.com/binplz/binplz.dev/blob/master/secrets/decrypt.sh">script</a> that lets <a href="https://github.com/binplz/binplz.dev/blob/master/secrets/trustees">trusted users</a> decrypt them, all in a declarative way. This was inspired by the way <a href="https://github.com/ryantm/agenix">agenix</a> (about which I <a href="https://jonascarpay.com/posts/2021-07-27-agenix.html">wrote before</a>) works, which we unfortunately can’t use directly here.</p>
 <h1 data-number="5" id="conclusion"><span class="header-section-number">5</span> Conclusion</h1>
 <p>And with that, we’re done. It’s undeniably hairy in a few places, but I think it’s easily worth it: we now have fast, efficient, end-to-end-declarative deployments! If you’ve made it this far, thank you very much for reading. If you have any comments/questions/feedback, please feel free to reach out.</p>
+<p>Thanks to <a href="https://functor.tokyo/">Dennis Gosnell</a> and <a href="https://github.com/considerate/">Viktor Kronvall</a> for proof-reading drafts of this post.</p>
 <section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
