@@ -56,7 +56,7 @@ I do feel, however, that it is the most effective solution out of all the option
 It is conceptually similar to Terraform, (and older, actually,) but with a focus on deploying NixOS.
 
 The biggest problem with NixOps is that, unlike Nix itself, it has a lot of viable alternatives, and the industry has picked Terraform as the de facto [IaC](https://en.wikipedia.org/wiki/Infrastructure_as_code) platform.
-NixOps sadly doesn't have the engineering effort behind it that is required to make it work in production, so if you do use it, you should expect to do a lot of that engineering yourself as soon as you stray from the golden path.
+NixOps sadly doesn't have the engineering effort behind it that is required to make always make it "just work", so if you do use it, you should expect to do a lot of that engineering yourself as soon as you stray from the golden path.
 
 NixOps does boast uniquely tight integration with Nix, but as we'll see later, we can achieve very nice integration with just Terraform as well.
 
@@ -67,7 +67,7 @@ It is [recommended on the NixOS website](https://nixos.org/guides/deploying-nixo
 
 My main issue with it is that it is too opinionated for how little it actually does:
 It is easy to reach a point where you need to tweak its behavior so much that you might as well write something yourself, and when you do, you'll find that it only takes a few dozen lines or so anyway.
-So, ultimately, I think it's a better use of your time to just implement all the deployment yourself code from the get-go.
+So, ultimately, I think it's a better use of your time to just implement all the deployment code yourself from the get-go.
 
 It is also not being maintained as of the time of this writing.
 
