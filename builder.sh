@@ -60,13 +60,4 @@ EOM
 
 cp static/style.css $out
 cp static/CNAME $out
-ASSETS=$(find assets/ -type f)
-for asset in $ASSETS; do
-  mkdir -p $out/$(dirname $asset)
-  case $asset in
-    *.dot)
-      dot -T svg -o "$out/${asset%.dot}.svg" $asset;;
-    *)
-      cp $asset $out/$asset;;
-  esac
-done
+cp -r assets/ $out
