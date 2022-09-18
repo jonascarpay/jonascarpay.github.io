@@ -12,7 +12,7 @@ We achieve this by integrating two tools: [Terraform](https://www.terraform.io/)
 
 Terraform and Nix are both pieces of software whose success comes from their ability to provide a declarative interface to a procedural world.
 In the case of Nix, that world is software, and for Terraform, it's hardware.
-Think of them this way and you can see how they fit together and combine into something greater than the sum of its parts.
+Think of them this way and you can see how they fit together to become something greater than the sum of its parts.
 
 We'll be exploring these ideas by building and deploying a simple web service to Amazon EC2.
 We start with a spartan approach to declarativity: changing a single line of code in the application will invalidate the entire downstream pipeline to the point that our tooling will propose provisioning new hardware.
@@ -83,7 +83,9 @@ digraph {
 ```
 
 Our server runs an image, the image contains a NixOS configuration, the NixOS configuration contains our application.
-Change the application and you invalidate the configuration, invalidate the configuration and you invalidate the image, invalidate the image and you invalidate the server instance.
+Change the application and you invalidate the configuration.
+Invalidate the configuration and you invalidate the image.
+Invalidate the image and you invalidate the server instance.
 
 In this section, we're working towards the code as it is on the [`master` branch](https://github.com/jonascarpay/iplz) of the source repository.
 We'll start with the Nix side of things, in particular the [`flake.nix`](https://github.com/jonascarpay/iplz/blob/master/flake.nix) file that defines how to build the application and image.
@@ -166,6 +168,37 @@ $ curl localhost:8000
 127.0.0.1
 ```
 
+For reference, the full `flake.nix` file should now look something like this:
+
+```nix
+{
+  inputs = {
+    ...
+  };
+
+  outputs = inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = import inputs.nixpkgs { inherit system; };
+
+      iplz-lib = pkgs.python3Packages.buildPythonPackage {
+        ...
+      };
+
+      iplz-server = pkgs.writeShellApplication {
+        ...
+      };
+
+    in
+    {
+      packages.${system} = {
+        inherit
+          iplz-server;
+      };
+    };
+}
+```
+
 Defining an image
 -----------------
 The next step is to turn the application into a deployable image.
@@ -196,7 +229,7 @@ base-config = {
   systemd.services.iplz = {
     enable = true;
     wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ]
+    after = [ "network.target" ];
     script = ''
       ${iplz-server}/bin/iplz-server --host 0.0.0.0 --port 80
     '';
@@ -497,8 +530,9 @@ Deployment
 
 First, if you haven't already,
 
-1. make sure you [set up AWS authentication](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration),
-2. initialize Terraform with `nix run .#terraform init`.
+1. Make sure you [set up AWS authentication](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration).
+   You can set it up through Terraform, or in any one of the many ways supported by `aws-cli`.
+2. Initialize Terraform with `nix run .#terraform init`.
 
 Confirm that you're ready to deploy by looking at the execution plan.
 It should look a lot like this:
@@ -548,7 +582,8 @@ $ curl $(nix run .#terraform -- output -raw public_ip)
 ```
 
 It took some effort, but we were finally able to deliver of the goal of building, provisioning, and deploying with a single command!
-Don't forget to `nix run .#terraform destroy` after you're done.
+Also, don't forget to `nix run .#terraform destroy` after you're done.
+Depending on your plan you might get charged if you accidentally leave your server running.
 
 ### Redeployment
 
@@ -742,7 +777,7 @@ Creating the deployment resource
 
 Switching to a new NixOS configuration, operationally, requires two steps: uploading the configuration, and then activating it.
 Our goal here is to capture this process in a Terraform resource, such that it happens automatically whenever our configuration changes.
-There's also a few smaller tweaks and workarounds we need, mostly just to make everything SSH-based scripts run smoothly.
+There's also a few smaller tweaks and workarounds we need, mostly just to make everything SSH-based run smoothly.
 
 ### Copying and activating with `null_resource`
 
@@ -759,6 +794,7 @@ We'll also run garbage collection afterwards, since for the purposes of this gui
 
 The star of the show on the Terraform side of things is the [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource).
 Its use case is to run a set of scripts (Terraform calls them provisioners) when one of its inputs or triggers changes[^resource], which is exactly what we want.
+Because it depends on the server instance's `public_ip` attribute, it will automatically only run _after_ provisioning.
 
 Putting it all together looks like this:
 
@@ -773,7 +809,7 @@ resource "null_resource" "nixos_live_config" {
   provisioner "local-exec" {
     command = <<-EOT
       nix-copy-closure $TARGET ${var.live_config_path}
-      ssh $TARGET '${var.live_config_path}/bin/switch-to-configuration switch && nix-collect-garbage'
+      ssh $TARGET '${var.live_config_path}/bin/switch-to-configuration switch && nix-collect-garbage -d'
       EOT
     environment = {
       TARGET = "root@${aws_instance.iplz_server.public_ip}"
@@ -823,7 +859,9 @@ resource "aws_instance" "iplz_server" {
 Deployment
 ----------
 
-If you change your application and run `nix run .#terraform apply`, it should look something like this:
+Deployment itself should look similar to how it did before, just with one extra resource.
+The gains we've made become very apparent when redeploying, however.
+If you change your application and run `nix run .#terraform apply`, it should now look something like this:
 
 ```
   # null_resource.nixos_live_config must be replaced
@@ -832,10 +870,11 @@ If you change your application and run `nix run .#terraform apply`, it should lo
 Plan: 1 to add, 0 to change, 1 to destroy.
 ```
 
-As you can see, compared to [before](#redeployment), this only touches the `nixos_live_config` resource.
+Compared to [before](#redeployment), this only touches the `nixos_live_config` resource.
 Applying should take significantly less time now, and leave the instance itself in place.
 
 Again, the final resulting source code can be found on the [`faster-deployment` branch](https://github.com/jonascarpay/iplz/tree/faster-deployment).
+As always, don't forget to run `terraform destroy`!
 
 Where to go from here
 =====================
@@ -896,3 +935,5 @@ And with that, we're done.
 It's undeniably hairy in a few places, but I think it's easily worth it: we now have fast, efficient, end-to-end-declarative deployments!
 If you've made it this far, thank you very much for reading.
 If you have any comments/questions/feedback, please feel free to reach out.
+
+Thanks to [Dennis Gosnell](https://functor.tokyo/) and [Viktor Kronvall](https://github.com/considerate/) for proof-reading drafts of this post.
