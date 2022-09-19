@@ -667,6 +667,7 @@ bootstrap-config-module = {
 ```
 
 The only thing to add is SSH access, so that we can actually talk to our server after instantiation.
+Setting `sercies.openssh.enable` also automatically opens port 22, so you don't need to touch the firewall configuration.
 The complete bootstrap configuration module looks like this:
 
 ```nix
@@ -770,11 +771,11 @@ terraform = pkgs.writeShellScriptBin "terraform" ''
 '';
 ```
 
-Remember to also declare these in Terraform.
+Remember to also update the variable declarations in the Terraform configuration.
 
 Creating the deployment resource
 --------------------------------
-Switching to a new NixOS configuration, operationally, requires two steps: uploading the configuration, and then activating it.
+Switching a remote server to a new NixOS configuration, operationally, requires two steps: uploading the configuration, and then activating it.
 Our goal here is to capture this process in a Terraform resource, such that it happens automatically whenever our configuration changes.
 There's also a few smaller tweaks and workarounds we need, mostly just to make everything SSH-based run smoothly.
 
@@ -912,7 +913,7 @@ Have Nix manage Terraform providers
 
 You could rightly argue that we're not completely declarative because we have to install Terraform providers with `terraform init` before we can actually use it.
 Nix can actually come to the rescue here by declaratively managing providers for us!
-Replace `pkgs.terraform` by `(pkgs.terraform.withplugins (p: [ p.aws p.null ]))`.
+Replace `pkgs.terraform` by `(pkgs.terraform.withPlugins (p: [ p.aws p.null ]))`.
 You'll still need to run `terraform init`, but it won't do any installation, and you should actually be able to commit the resulting files to VCS.
 
 Unfortunately, at the time of writing there are some issues with the `null` provider that make going through Terraform as normal the more robust option, but if you try it and it works, there's no reason not to use it.
