@@ -549,7 +549,7 @@ Terraform will perform the following actions:
   + resource "aws_ebs_snapshot_import" "iplz_import" { ... }
   + resource "aws_iam_policy" "vmimport_policy" { ... }
   + resource "aws_iam_role" "vmimport_role" { ... }
-  + resource "aws_iam_role_policy_attachment" "vmpimport_attach" { ... }
+  + resource "aws_iam_role_policy_attachment" "vmimport_attach" { ... }
   + resource "aws_instance" "iplz_server" { ... }
   + resource "aws_s3_bucket" "iplz_bucket" { ... }
   + resource "aws_s3_bucket_acl" "iplz_acl" { ... }
@@ -774,13 +774,12 @@ Remember to also declare these in Terraform.
 
 Creating the deployment resource
 --------------------------------
-
 Switching to a new NixOS configuration, operationally, requires two steps: uploading the configuration, and then activating it.
 Our goal here is to capture this process in a Terraform resource, such that it happens automatically whenever our configuration changes.
 There's also a few smaller tweaks and workarounds we need, mostly just to make everything SSH-based run smoothly.
 
-### Copying and activating with `null_resource`
-
+### Implementing the resource
+#### The Nix side
 You copy Nix paths from one computer to another with `nix-copy-closure`.
 From [the `man` page](https://nixos.org/manual/nix/unstable/command-ref/nix-copy-closure.html):
 
@@ -792,16 +791,18 @@ This is exactly what we need, and has the additional benefit of only ever copyin
 Once the configuration has been copied, we SSH into the instance, and call the `switch_to_configuration` script in the configuration root.
 We'll also run garbage collection afterwards, since for the purposes of this guide, at least, this is the only time we'll ever create garbage.
 
-The star of the show on the Terraform side of things is the [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource).
-Its use case is to run a set of scripts (Terraform calls them provisioners) when one of its inputs or triggers changes[^resource], which is exactly what we want.
-Because it depends on the server instance's `public_ip` attribute, it will automatically only run _after_ provisioning.
+#### The Terraform side
+Now, we just need to capture this in a Terraform resource.
+
+Every Terraform resource supports running custom actions after they've been instantiated.
+These actions called [_provisioners_](https://www.terraform.io/language/resources/provisioners/syntax), and they are our entry point for inserting custom logic.
+In this case, the pseudo-resource we've been describing is a resource that consists _only_ of provisioners, which is precisely what [Terraform's `null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) is for.
+By setting the null resource's trigger to `live_config_path`, it will run every time the live configuration changes, and because in this case it depends on the server instance's `public_ip` attribute, that will only ever happen _after_ provisioning.
 
 Putting it all together looks like this:
 
-[^resource]: Actually, I suppose that's what _every_ resource does.
-
 ```nix
-resource "null_resource" "nixos_live_config" {
+resource "null_resource" "nixos_deployment" {
   triggers = {
     live_config_path = var.live_config_path
   }
@@ -819,7 +820,6 @@ resource "null_resource" "nixos_live_config" {
 ```
 
 ### SSH ingress rule
-
 In order to get SSH access to our instance, we also need to define a new `ingress` rule for port 22, in the same way as we opened port 80 for HTTP traffic.
 Just duplicate [the `ingress` block](#aws_security_group) and change the port number.
 
@@ -864,13 +864,13 @@ The gains we've made become very apparent when redeploying, however.
 If you change your application and run `nix run .#terraform apply`, it should now look something like this:
 
 ```
-  # null_resource.nixos_live_config must be replaced
--/+ resource "null_resource" "nixos_live_config" { ... }
+  # null_resource.nixos_deployment must be replaced
+-/+ resource "null_resource" "nixos_deployment" { ... }
 
 Plan: 1 to add, 0 to change, 1 to destroy.
 ```
 
-Compared to [before](#redeployment), this only touches the `nixos_live_config` resource.
+Compared to [before](#redeployment), this only touches the `nixos_deployment` resource.
 Applying should take significantly less time now, and leave the instance itself in place.
 
 Again, the final resulting source code can be found on the [`faster-deployment` branch](https://github.com/jonascarpay/iplz/tree/faster-deployment).
@@ -899,7 +899,7 @@ resource "aws_instance" "iplz_server" {
   }
 }
 ```
-Unlike the `nixos_live_config` resource, the inputs to the instance are only relevant during provisioning, so this is completely safe.
+Unlike the `nixos_deployment` resource, the inputs to the instance are only relevant during provisioning, so this is completely safe.
 
 You can also consider completely dropping the bootstrap image.
 If you let Terraform/`cloud_init` handle SSH setup you can simply pull a NixOS image from the AMI registry and pass that as the AMI.
