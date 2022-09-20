@@ -362,7 +362,7 @@ $ curl localhost:8000
 <p>Nix has amazing tooling making for building all sorts of images, conveniently collected in <a href="https://github.com/nix-community/nixos-generators">the <code>nixos-generators</code> repository</a>. Because making different images is quick and easy, we’ll actually define <em>two</em> images:</p>
 <ol type="1">
 <li>We’ll make a QEMU-based VM image that we can run locally. We use this image to test and debug before deployment.</li>
-<li>Once that’s done, we define the actual <a href="https://en.wikipedia.org/wiki/VHD_(file_format)">VHD</a> image that we’ll end up deploying to EC2.</li>
+<li>Once that’s done, we define the actual <a href="https://en.wikipedia.org/wiki/VHD_(file_format)">VHD</a> that’ll be the basis for our EC2 instance.</li>
 </ol>
 <p>NixOS is configured through configuration modules, of which we’ll have three: one containing the shared base configuration, and then one per image containing image-specific configuration.</p>
 <h3 data-number="2.2.1" id="base-config"><span class="header-section-number">2.2.1</span> Base NixOS configuration</h3>
