@@ -1,6 +1,5 @@
 ---
 title: A Comprehensive Guide to End-to-End-Declarative Deployment with Terraform and Nix
-subtitle: Deploy a web service to EC2 with a single command
 date: 2022-09-19
 tags: nix terraform declarative deployment tutorial aws ec2
 abstract: Express your entire production pipeline in code; build, provision, and deploy to EC2 with a single command.
