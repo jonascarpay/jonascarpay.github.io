@@ -157,7 +157,7 @@
 <p>My main issue with it is that it is way too opinionated for how little it actually does: It is easy to reach a point where you need to tweak its behavior so much that you might as well write something yourself, and when you do, you’ll find that it only takes a few dozen lines or so anyway. So, ultimately, I think it’s a better use of your time to just implement all the deployment code yourself from the get-go.</p>
 <p>It is also not being maintained as of the time of this writing.</p>
 <h1 data-number="2" id="the-spartan-approach"><span class="header-section-number">2</span> The spartan approach</h1>
-<p>We’ll start by taking the most straightforward path to declarative deployment. Conceptually, the dependency graph looks roughly like this:</p>
+<p>We’ll start by taking the most straightforward path to declarative deployment. Conceptually, the dependency graph looks something like this:</p>
 <div class="light"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
@@ -362,7 +362,7 @@ $ curl localhost:8000
 <p>Nix has amazing tooling making for building all sorts of images, conveniently collected in <a href="https://github.com/nix-community/nixos-generators">the <code>nixos-generators</code> repository</a>. Because making different images is quick and easy, we’ll actually define <em>two</em> images:</p>
 <ol type="1">
 <li>We’ll make a QEMU-based VM image that we can run locally. We use this image to test and debug before deployment.</li>
-<li>Once that’s done, we define the actual <a href="https://en.wikipedia.org/wiki/VHD_(file_format)">VHD</a> that’ll be the basis for our EC2 instance.</li>
+<li>Once that’s done, we define the actual EC2 image that will form the basis for our instances.</li>
 </ol>
 <p>NixOS is configured through configuration modules, of which we’ll have three: one containing the shared base configuration, and then one per image containing image-specific configuration.</p>
 <h3 data-number="2.2.1" id="base-config"><span class="header-section-number">2.2.1</span> Base NixOS configuration</h3>
@@ -433,7 +433,7 @@ $ curl localhost:8000
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  ];</span>
 <span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>};</span>
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>iplz-img-path = <span class="st">&quot;</span>${iplz-ec2-img}<span class="st">/</span>${image-name}<span class="st">.vhd&quot;</span>;</span></code></pre></div>
-<p>That’s it, building <code>iplz-ec2-img</code> should now give you an EC2 VHD image.</p>
+<p>That’s it, building <code>iplz-ec2-img</code> should now give you an EC2-compatible image in <a href="https://en.wikipedia.org/wiki/VHD_(file_format)">VHD</a> format.</p>
 <h2 data-number="2.3" id="the-nix-terraform-interface"><span class="header-section-number">2.3</span> The Nix-Terraform interface</h2>
 <p>The next question is how to get our Nix outputs to be Terraform inputs, or as Terraform calls them, variables. This part is important, because if we get the boundary between Nix and Terraform right, magic happens: changes in Nix will propagate through to Terraform, where they show up as changes to the variables, and once Terraform sees a change in a variable it will in turn invalidate its downstream resources, giving us what we’re here for: end-to-end declarativity.</p>
 <p>Variables can be passed to Terraform at run time in several ways, the easiest for us being through environment variables. If a Terraform module declares a variable <code>foo</code>, it will look for the environment variable <code>TF_VAR_foo</code>, or in our case, <code>iplz_img_path</code> and <code>TF_VAR_iplz_img_path</code>, respectively.</p>
@@ -443,7 +443,7 @@ $ curl localhost:8000
 <li>Have Nix provide a <em>wrapped <code>terraform</code> executable</em> with the variables already set.</li>
 </ol>
 <p>I’m going to use option 2 for the examples for the remainder of this text. It’s a bit more verbose, but also a bit more foolproof. Ultimately it’s personal preference, and there are instructions for both below. If you choose to go with the shell, replace every instance of <code>nix run .#terraform</code> with just a regular <code>terraform</code>, and make sure that you’re in the deployment shell.</p>
-<p>Whatever option you choose, after you’ve set it up, changing something in the upstream application should invalidate your shell/executable and build a new VHD.</p>
+<p>Whatever option you choose, after you’ve set it up, changing something in the upstream application should invalidate your shell/executable and build a new image.</p>
 <h3 data-number="2.3.1" id="option-1-shell-variable"><span class="header-section-number">2.3.1</span> Option 1: Shell variable</h3>
 <p>Define the shell as follows:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>deploy-shell = pkgs.mkShell {</span>
@@ -467,7 +467,7 @@ $ curl localhost:8000
 Terraform v1.2.7
 on linux_amd64</code></pre>
 <h2 data-number="2.4" id="terraform-setup"><span class="header-section-number">2.4</span> Terraform Setup</h2>
-<p>To recap, we now have the ability of launching Terraform in an environment where the <code>iplz_img_path</code> variable points at an VHD image containing our application, and that path changes automatically when our application changes. On the Terraform side, we just need to write our module declaring our resources, and we’re ready to deploy.</p>
+<p>To recap, we now have the ability of launching Terraform in an environment where the <code>iplz_img_path</code> variable points at an image containing our application, and that path changes automatically when our application changes. On the Terraform side, we just need to write our module declaring our resources, and we’re ready to deploy.</p>
 <p>Under normal circumstances, launching an EC2 instance with Terraform takes just one or two resource declarations. In our case however, it’s made quite a bit more difficult by the fact that during the instantiation process, we want to get an image from our disk and into AWS in such a way that we can boot an instance from it, for which there is no first-class support. So, we manually need to do some plumbing. That pipeline fundamentally consists of uploading our EC2 image to an <a href="#aws_s3_bucket"><code>aws_s3_bucket</code></a> with <a href="#aws_s3_object"><code>aws_s3_object</code></a>, turning it into an EBS snapshot with <a href="#aws_ebs_snapshot_import"><code>aws_ebs_snapshot_import</code></a>, turning the snapshot into an actual AMI with <a href="#aws_ami"><code>aws_ami</code></a>, which we then pass to our final <a href="#aws_instance"><code>aws_instance</code></a>. All the other resources are boilerplate to get the right permissions in place.</p>
 <p>The full final dependency graph looks like this:</p>
 <div class="light"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -817,7 +817,7 @@ on linux_amd64</code></pre>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.4" id="aws_ebs_snapshot_import"><span class="header-section-number">2.4.1.4</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_snapshot_import"><code>aws_ebs_snapshot_import</code></a></h4>
-<p>An EBS volume is a sort of virtual hard disk, and in this step we make one from our VHD image<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The resulting volume doesn’t automatically invalidate when the image changes, so we manually add a trigger for it. Importing a VM on AWS requires special permissions, so we to define <a href="#aws_iam_role">a special role for it below</a>.</p>
+<p>An EBS volume can be thought of as a virtual hard disk, which we pass to the AMI to boot from. In this step we make turn our VHD image into such a volume<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The resulting volume doesn’t automatically invalidate when the image changes, so we manually add a trigger for it. Also, importing a VM on AWS requires special permissions, so we define <a href="#aws_iam_role">a special role for it below</a>.</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_ebs_snapshot_import&quot;</span> <span class="st">&quot;iplz_import&quot;</span> {</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  role_name = aws_iam_role.vmimport_role.id</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  disk_container {</span>
@@ -835,7 +835,7 @@ on linux_amd64</code></pre>
 <span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h4 data-number="2.4.1.5" id="aws_iam_role"><span class="header-section-number">2.4.1.5</span> <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role"><code>aws_iam_role</code></a>, <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy"><code>aws_iam_policy</code></a>, and <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment"><code>aws_iam_role_policy_attachment</code></a></h4>
 <p>The goal with these resources is to ultimately run <a href="#aws_ebs_snapshot_import"><code>aws_ebs_snapshot_import</code></a> with the permissions required to import a VM snapshot. IAM (Identity and Access Management) is an extremely complex topic in and of itself, and the Terraform interface to it doesn’t always make it easier. The goal here is to capture the <a href="https://docs.aws.amazon.com/vm-import/latest/userguide/required-permissions.html#vmimport-role">service role configuration described here</a> in Terraform resources. At the time of writing, the recommended way of doing that is by putting the role configuration in an <code>aws_iam_role</code>, the policy configuration in an <code>aws_iam_policy</code>, and then attaching the policy to the role with an <code>iam_role_policy_attachment</code>.</p>
-<p>I’ve omitted most of the actual policies, since they’re just copied verbatim from the previous link. The exception is that by going through Terraform, we can use string interpolation to refer back to our other resources inside the policies, as seen in <code>vmimport_policy</code>.</p>
+<p>I’ve omitted most of the actual policies, since they’re just copied verbatim from the previous link. The exception is that by going through Terraform, we can use string interpolation to refer to our other resources inside the policies, as seen in <code>vmimport_policy</code>.</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>resource <span class="st">&quot;aws_iam_role_policy_attachment&quot;</span> <span class="st">&quot;vmpimport_attach&quot;</span> {</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  role       = aws_iam_role.vmimport_role.id</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  policy_arn = aws_iam_policy.vmimport_policy.arn</span>
