@@ -75,7 +75,7 @@ It is also not being maintained as of the time of this writing.
 The spartan approach
 ====================
 We'll start by taking the most straightforward path to declarative deployment.
-Conceptually, the dependency graph looks roughly like this:
+Conceptually, the dependency graph looks something like this:
 
 ```{ .graphviz }
 digraph {
@@ -210,9 +210,7 @@ Because making different images is quick and easy, we'll actually define _two_ i
 
 1. We'll make a QEMU-based VM image that we can run locally.
    We use this image to test and debug before deployment.
-2. Once that's done, we define the actual [VHD](https://en.wikipedia.org/wiki/VHD_(file_format)) that'll be the basis for our EC2 instance.
-
-[^ras]: I am aware that the I already stands for image.
+2. Once that's done, we define the actual EC2 image that will form the basis for our instances.
 
 NixOS is configured through configuration modules, of which we'll have three: one containing the shared base configuration, and then one per image containing image-specific configuration.
 
@@ -316,7 +314,7 @@ iplz-ec2-img = inputs.nixos-generators.nixosGenerate {
 iplz-img-path = "${iplz-ec2-img}/${image-name}.vhd";
 ```
 
-That's it, building `iplz-ec2-img` should now give you an EC2 VHD image.
+That's it, building `iplz-ec2-img` should now give you an EC2-compatible image in [VHD](https://en.wikipedia.org/wiki/VHD_(file_format)) format.
 
 The Nix-Terraform interface
 ---------------------------
@@ -337,7 +335,7 @@ It's a bit more verbose, but also a bit more foolproof.
 Ultimately it's personal preference, and there are instructions for both below.
 If you choose to go with the shell, replace every instance of `nix run .#terraform` with just a regular `terraform`, and make sure that you're in the deployment shell.
 
-Whatever option you choose, after you've set it up, changing something in the upstream application should invalidate your shell/executable and build a new VHD.
+Whatever option you choose, after you've set it up, changing something in the upstream application should invalidate your shell/executable and build a new image.
 
 ### Option 1: Shell variable
 
@@ -384,7 +382,7 @@ on linux_amd64
 
 Terraform Setup
 ---------------
-To recap, we now have the ability of launching Terraform in an environment where the `iplz_img_path` variable points at an VHD image containing our application, and that path changes automatically when our application changes.
+To recap, we now have the ability of launching Terraform in an environment where the `iplz_img_path` variable points at an image containing our application, and that path changes automatically when our application changes.
 On the Terraform side, we just need to write our module declaring our resources, and we're ready to deploy.
 
 Under normal circumstances, launching an EC2 instance with Terraform takes just one or two resource declarations.
@@ -470,9 +468,10 @@ resource "aws_ami" "iplz_ami" {
 
 #### [`aws_ebs_snapshot_import`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_snapshot_import)
 
-An EBS volume is a sort of virtual hard disk, and in this step we make one from our VHD image[^grahamc].
+An EBS volume can be thought of as a virtual hard disk, which we pass to the AMI to boot from.
+In this step we make turn our VHD image into such a volume[^grahamc].
 The resulting volume doesn't automatically invalidate when the image changes, so we manually add a trigger for it.
-Importing a VM on AWS requires special permissions, so we to define [a special role for it below](#aws_iam_role).
+Also, importing a VM on AWS requires special permissions, so we define [a special role for it below](#aws_iam_role).
 ```nix
 resource "aws_ebs_snapshot_import" "iplz_import" {
   role_name = aws_iam_role.vmimport_role.id
@@ -502,7 +501,7 @@ The goal here is to capture the [service role configuration described here](http
 At the time of writing, the recommended way of doing that is by putting the role configuration in an `aws_iam_role`, the policy configuration in an `aws_iam_policy`, and then attaching the policy to the role with an `iam_role_policy_attachment`.
 
 I've omitted most of the actual policies, since they're just copied verbatim from the previous link.
-The exception is that by going through Terraform, we can use string interpolation to refer back to our other resources inside the policies, as seen in `vmimport_policy`.
+The exception is that by going through Terraform, we can use string interpolation to refer to our other resources inside the policies, as seen in `vmimport_policy`.
 
 ```nix
 resource "aws_iam_role_policy_attachment" "vmpimport_attach" {
