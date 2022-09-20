@@ -210,7 +210,7 @@ Because making different images is quick and easy, we'll actually define _two_ i
 
 1. We'll make a QEMU-based VM image that we can run locally.
    We use this image to test and debug before deployment.
-2. Once that's done, we define the actual [VHD](https://en.wikipedia.org/wiki/VHD_(file_format)) image that we'll end up deploying to EC2.
+2. Once that's done, we define the actual [VHD](https://en.wikipedia.org/wiki/VHD_(file_format)) that'll be the basis for our EC2 instance.
 
 [^ras]: I am aware that the I already stands for image.
 
