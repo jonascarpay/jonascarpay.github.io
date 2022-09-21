@@ -20,7 +20,7 @@ Once that's done, we'll look at how to tame this into something more ergonomic, 
 
 Preliminaries
 -------------
-This guide is written as a step-by-step tutorial, one that I've tried to keep approachable to people with limited Terraform or Nix experience.
+This guide is written as a step-by-step tutorial, one that I've tried to keep approachable for people with limited Terraform or Nix experience.
 I try to err on the side of going in too _much_ detail, but Nix and Terraform are both incredibly complex, and there are bound to be details important to you that I thought better to skip or leave implicit.
 If you're confused at any point, you can always consult the [end result's source code](https://github.com/jonascarpay/iplz).
 
@@ -49,7 +49,7 @@ Comparisons with other methods
 ------------------------------
 The ideas presented here are not necessarily new, nor is the approach I advocate for the only way of integrating Terraform and Nix.
 I do feel, however, that it is the most effective solution out of all the options I know of.
-Let's take a second to compare it to the two most prominent alternatives: NixOps and `terraform-nixos`.
+Let's take a second to look at the two most prominent alternatives: NixOps and `terraform-nixos`.
 
 ### NixOps
 
@@ -75,7 +75,7 @@ It is also not being maintained as of the time of this writing.
 The spartan approach
 ====================
 We'll start by taking the most straightforward path to declarative deployment.
-Conceptually, the dependency graph looks something like this:
+Conceptually, the dependency graph looks like this:
 
 ```{ .graphviz }
 digraph {
@@ -88,7 +88,7 @@ Change the application and you invalidate the configuration.
 Invalidate the configuration and you invalidate the image.
 Invalidate the image and you invalidate the server instance.
 
-In this section, we're working towards the code as it is on the [`master` branch](https://github.com/jonascarpay/iplz) of the source repository.
+In this section, we're working towards the code as it appears on the [`master` branch](https://github.com/jonascarpay/iplz) of the source repository.
 We'll start with the Nix side of things, in particular the [`flake.nix`](https://github.com/jonascarpay/iplz/blob/master/flake.nix) file that defines how to build the application and image.
 For those following along step-by-step, I recommend using this as your scaffolding, and adding to it as you go along:
 ```nix
@@ -142,7 +142,7 @@ app = falcon.asgi.App()
 app.add_route("/", Server())
 ```
 
-To turn it into a buildable python package, add a [`setup.py`](https://github.com/jonascarpay/iplz/blob/master/app/setup.py) file, and add these two derivations to `flake.nix`:
+The quickest way to turn it into a buildable python package is to, stick it in a subdirectory, add a [`setup.py`](https://github.com/jonascarpay/iplz/blob/master/app/setup.py) file, and add these two derivations to `flake.nix`:
 
 ```nix
 iplz-lib = pkgs.python3Packages.buildPythonPackage {
@@ -203,16 +203,16 @@ For reference, the full `flake.nix` file should now look something like this:
 Defining an image
 -----------------
 The next step is to turn the application into a deployable image.
-Specifically, an image containing a NixOS installation configured to run `iplz` in the background as a `systemd` service.
+Specifically, an image containing a NixOS installation, configured to run `iplz` in the background as a `systemd` service.
 
 Nix has amazing tooling making for building all sorts of images, conveniently collected in [the `nixos-generators` repository](https://github.com/nix-community/nixos-generators).
 Because making different images is quick and easy, we'll actually define _two_ images:
 
-1. We'll make a QEMU-based VM image that we can run locally.
+1. We'll make a QEMU-based self-contained VM image that we can run locally.
    We use this image to test and debug before deployment.
 2. Once that's done, we define the actual EC2 image that will form the basis for our instances.
 
-NixOS is configured through configuration modules, of which we'll have three: one containing the shared base configuration, and then one per image containing image-specific configuration.
+NixOS is configured through configuration modules, of which we'll have three: one containing the shared base configuration, and then one per image with image-specific configuration.
 
 ### Base NixOS configuration {#base-config}
 
@@ -247,8 +247,8 @@ If this were an actual production machine this would be quite bare in terms of u
 > #### `system.stateVersion` {#stateVersion .unnumbered}
 > Without going into too much detail, `system.stateVersion` is supposed to be set to the NixOS release that you first configured a certain machine with, `22.05` at the time of writing.
 > It provides a mechanism for NixOS modules to deal with breaking changes when updating, although in practice its actually pretty rare for it to be used.
-> In this first section of the tutorial, our server gets wiped every time we update/make a new configuration, so technically we don't actually gain anything by setting it.
 >
+> In this first section of the tutorial, our server gets wiped every time we update/make a new configuration, so technically we don't actually gain anything by setting it.
 > Still, it's good practice to set it. Nix will nag at us if we don't, and more importantly, later on we won't be wiping on every configuration change anymore.
 > There's some good discussion [here](https://discourse.nixos.org/t/when-should-i-change-system-stateversion/1433) if you're interested.
 
@@ -259,7 +259,7 @@ If this were an actual production machine this would be quite bare in terms of u
 
 ### QEMU VM {#iplz-vm}
 
-For our QEMU image we add some configuration so that we automatically log in as `root`, plus we open a port so we can actually test the service from the host:
+For our QEMU image we add some configuration so that we automatically log in as `root`, plus we open a port so we can connect over HTTP and actually test the service from the host:
 
 ```nix
 qemu-config = {
@@ -268,7 +268,7 @@ qemu-config = {
 };
 ```
 
-And finally, we turn it into a derivation for an actually runnable QEMU image:
+This is how we turn it into a derivation for an actually runnable QEMU image:
 
 ```nix
 iplz-vm = inputs.nixos-generators.nixosGenerate {
@@ -383,13 +383,14 @@ on linux_amd64
 Terraform Setup
 ---------------
 To recap, we now have the ability of launching Terraform in an environment where the `iplz_img_path` variable points at an image containing our application, and that path changes automatically when our application changes.
-On the Terraform side, we just need to write our module declaring our resources, and we're ready to deploy.
+On the Terraform side, we just need to write a module declaring the necessary resources, and we're ready to deploy.
 
 Under normal circumstances, launching an EC2 instance with Terraform takes just one or two resource declarations.
 In our case however, it's made quite a bit more difficult by the fact that during the instantiation process, we want to get an image from our disk and into AWS in such a way that we can boot an instance from it, for which there is no first-class support.
-So, we manually need to do some plumbing.
-That pipeline fundamentally consists of uploading our EC2 image to an [`aws_s3_bucket`](#aws_s3_bucket) with [`aws_s3_object`](#aws_s3_object), turning it into an EBS snapshot with [`aws_ebs_snapshot_import`](#aws_ebs_snapshot_import), turning the snapshot into an actual AMI with [`aws_ami`](#aws_ami), which we then pass to our final [`aws_instance`](#aws_instance).
-All the other resources are boilerplate to get the right permissions in place.
+So, we need to add some plumbing.
+
+The Terraform pipeline fundamentally consists of uploading our EC2 image to an [`aws_s3_bucket`](#aws_s3_bucket) with [`aws_s3_object`](#aws_s3_object), turning it into an EBS snapshot with [`aws_ebs_snapshot_import`](#aws_ebs_snapshot_import), passing the snapshot volume to actual AMI with [`aws_ami`](#aws_ami), and passing that AMI in turn to our final [`aws_instance`](#aws_instance).
+All the other resources are boilerplate, mostly just to get the right permissions in place.
 
 The full final dependency graph looks like this:
 
@@ -414,12 +415,15 @@ digraph {
 }
 ```
 
-The main takeaway of this section is simply that we can use Terraform to automatically upload images and instantiate servers with them if we use the pipeline in the above graph.
-The process of actually using Terraform is not particularly interesting; you just declare the resources in a Terraform file, and then materialize it with `terraform apply`.
-I'll go over the individual resources and briefly explain what they do in the next section, but there's nothing particularly surprising there that you couldn't also figure out from the docs.
-The full source file can be found [here](https://github.com/jonascarpay/iplz/blob/master/main.tf).
+The main takeaway of this section is that with the setup described in this graph, we can declaratively upload disk images and boot instances with them.
+Once you have the high-level picture, the implementation details can mostly be figured out from the Terraform docs.
+I'll still go over the individual resources and briefly explain what they do in the next section, but the point is that there is nothing particularly surprising or interesting about the individual resources.
+The full Terraform source file can be found [here](https://github.com/jonascarpay/iplz/blob/master/main.tf).
 
 ### Terraform resources
+
+As promised, I will outline the individual resources and briefly comment on them.
+Their titles link to the corresponding Terraform documentation page.
 
 #### [`aws_instance`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance)
 This is the final EC2 instance, the thing that everything else is here to enable.
@@ -435,8 +439,8 @@ resource "aws_instance" "iplz_server" {
 ```
 
 #### [`aws_security_group`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group)
-What connectivity to allow.
-We only need TCP port 80 for now, if you're using the [NixOS firewall](#firewall) you could also leave this completely open.
+A security group describes a set of connectivity rules.
+We only need TCP port 80 for now, but if you're already using the [NixOS firewall](#firewall) you could also leave this completely open.
 Either way, Terraform and AWS seem to disagree about what the default settings are, so it's safest to be explicit here.
 
 ```nix
@@ -452,8 +456,12 @@ resource "aws_security_group" "iplz_security_group" {
 
 #### [`aws_ami`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ami)
 An AMI is an Amazon Machine Image, which is the final image that we actually boot our instance with.
-AMIs are higher level images than the EC2 images we've been making, they can encompass multiple disks plus some extra metadata.
+AMIs are higher level images than the EC2 images we've been making.
+They can contain multiple disks, plus some extra metadata.
+The way we make an AMI out of our custom image is by passing turning it into the hard drive volume that our AMI boots from, which we do [below](#aws_ebs_snapshot_import).
+
 The EC2 module in Nix [only works with `hvm`](https://github.com/NixOS/nixpkgs/blob/b207142dcc285f985ae6419df914262debeef12a/nixos/modules/virtualisation/amazon-image.nix#L35) here, so there's no question about what virtualization type to use.
+
 ```nix
 resource "aws_ami" "iplz_ami" {
   name                = "iplz_server_ami"
@@ -468,10 +476,11 @@ resource "aws_ami" "iplz_ami" {
 
 #### [`aws_ebs_snapshot_import`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_snapshot_import)
 
-An EBS volume can be thought of as a virtual hard disk, which we pass to the AMI to boot from.
-In this step we make turn our VHD image into such a volume[^grahamc].
-The resulting volume doesn't automatically invalidate when the image changes, so we manually add a trigger for it.
-Also, importing a VM on AWS requires special permissions, so we define [a special role for it below](#aws_iam_role).
+An EBS volume can be thought of as a virtual hard disk.
+In this step we turn our VHD image into such a volume[^grahamc].
+
+The resulting volume won't automatically invalidate when the image changes, so we manually add a trigger for it.
+Also, importing a VM on AWS [requires special permissions](https://docs.aws.amazon.com/vm-import/latest/userguide/required-permissions.html#vmimport-role), so we define [a special role for it below](#aws_iam_role).
 ```nix
 resource "aws_ebs_snapshot_import" "iplz_import" {
   role_name = aws_iam_role.vmimport_role.id
@@ -496,7 +505,7 @@ I don't think that's a coincidence, but I'm not actually sure.
 
 #### [`aws_iam_role`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role), [`aws_iam_policy`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy), and [`aws_iam_role_policy_attachment`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) {#aws_iam_role}
 The goal with these resources is to ultimately run [`aws_ebs_snapshot_import`](#aws_ebs_snapshot_import) with the permissions required to import a VM snapshot.
-IAM (Identity and Access Management) is an extremely complex topic in and of itself, and the Terraform interface to it doesn't always make it easier.
+IAM (Identity and Access Management) is an extremely complex topic in and of itself, and the Terraform interface to it doesn't always actually make it easier.
 The goal here is to capture the [service role configuration described here](https://docs.aws.amazon.com/vm-import/latest/userguide/required-permissions.html#vmimport-role) in Terraform resources.
 At the time of writing, the recommended way of doing that is by putting the role configuration in an `aws_iam_role`, the policy configuration in an `aws_iam_policy`, and then attaching the policy to the role with an `iam_role_policy_attachment`.
 
@@ -529,7 +538,7 @@ resource "aws_iam_policy" "vmimport_policy" {
 
 #### [`aws_s3_bucket`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket)
 An S3 bucket.
-Access configuration is handled by [`aws_s3_bucket_acl`](#aws_s3_bucket_acl), uploading is handled by [`aws_s3_object`](#aws_s3_object), leaving no configuration to go here.
+Access control configuration is handled by [`aws_s3_bucket_acl`](#aws_s3_bucket_acl), uploading is handled by [`aws_s3_object`](#aws_s3_object), leaving no configuration to go here.
 ```nix
 resource "aws_s3_bucket" "iplz_bucket" {}
 ```
@@ -638,7 +647,7 @@ That's what we'll be tackling in the next section.
 Improving the ergonomics
 ========================
 
-To repeat, the main issue with the approach we've used so far is how aggressively it re-provisions hardware.
+To reiterate, the main issue with the approach we've used so far is how aggressively it re-provisions hardware.
 If your application is stable that might be fine, but there are many situations where this is not ideal.
 Maybe you don't want to wait for provisioning every time you change something, maybe you have other things running on the server that cannot be shut down, or maybe you can't afford to get a new IP address after every change; whatever the reason, it can be impractical to tie the lifetime of your server to that of the application this tightly.
 In this section, we look at how to mitigate this problem.
@@ -659,11 +668,10 @@ digraph {
 
 This change can best be understood as splitting our NixOS configuration in two: the _bootstrap_ configuration, and the _live_ configuration.
 
-- The bootstrap configuration is the smallest possible configuration that gives us a NixOS installation with SSH access. This should never change after provisioning.
-- The live configuration is what contains our actual application. This is the part that we want to be able to freely change whenever we want.
+- The bootstrap configuration is the smallest possible configuration that gives us a NixOS installation with SSH access. The server instance depends on this, so it should ideally never change after provisioning.
+- The live configuration is what contains our actual application. This is the part that we want to be able to change however often and whenever and we want.
 
-We unify all of this with a pseudo-resource, called the _deployment_ in the above graph, that represents a configuration running on a server.
-
+We unify the server instance and the live configuration running on it with a pseudo-resource, called the _deployment_ in the above graph.
 With this setup, any changes to the application only invalidate the right-hand side of the dependency graph.
 Along the way, we'll also make it so we won't need to copy multiple gigabytes to our server every time we make a small change.
 
@@ -673,20 +681,19 @@ If you want to jump straight to the end result, you can find it on the [`faster-
 
 Splitting the NixOS configuration
 ---------------------------------
-
 In this section we split our NixOS configuration into the bootstrap and live configurations we defined above.
 NixOS uses the word "configuration" pretty loosely to refer to a system configuration's entire life cycle.
 The thing you write, build, activate, and boot are all "the configuration".
 For the purposes of this section, configuration means two things, each handled in its own subsection:
 
 - The configuration _description_ refers to the specification of NixOS options.
-An example would be the [`base-config` module above](#base-config).
-- The configuration _derivation_ is the thing that we build, the thing that turns description into an actual buildable artifact. So far, we've had two of these, the  [`iplz-vm`](#iplz-vm) and the [`iplz-ec2-img` image](#iplz-ec2-img)
+An example would be the [`base-config` module above](#base-config), but more generally it refers to all the modules that you pass to a builder.
+- The configuration _derivation_ is the thing that we build; the result of turning the description into an actual buildable artifact. So far, we've had two of these, the [`iplz-vm`](#iplz-vm) and the [`iplz-ec2-img` image](#iplz-ec2-img) images, and we'll soon add a "naked" NixOS configuration derivation.
 
 ### Splitting the configuration description
 
 This part is simple. Looking at our [base NixOS configuration module above](#base-config), you can see that with the exception of the `system.stateVersion` option[^stateVersion], everything here is application-specific.
-In other words, this is a perfectly good bootstrap configuration:
+In other words, if you remove those application-specific parts, you're left with this perfectly usable bootstrap configuration:
 
 [^stateVersion]: As alluded to [above](#stateVersion), this is where `sytem.stateVersion` actually starts to matter.
 
@@ -697,7 +704,7 @@ bootstrap-config-module = {
 ```
 
 The only thing to add is SSH access, so that we can actually talk to our server after instantiation.
-Setting `sercies.openssh.enable` also automatically opens port 22, so you don't need to touch the firewall configuration.
+Setting `services.openssh.enable` automatically opens port 22, so you don't need to touch the firewall configuration.
 The complete bootstrap configuration module looks like this:
 
 ```nix
@@ -743,7 +750,7 @@ live-config-module = {
 
 ### Splitting the configuration derivation
 
-This next part is going to be slightly trickier. The bootstrap configuration will still be distributed as a VHD image, which simply looks like this:
+This next part is going to be slightly trickier. The bootstrap configuration will still be distributed as an EC2-compatible VHD image, which now simply looks like this:
 
 ```nix
 bootstrap-img = inputs.nixos-generators.nixosGenerate {
@@ -756,7 +763,7 @@ bootstrap-img = inputs.nixos-generators.nixosGenerate {
 };
 ```
 
-For the live configuration however, we don't want to copy the AMI image itself, we want to copy over the image's _contents_.
+When we push the live configuration to the server however, we don't want to copy it as an image, we want to just copy over the image's _contents_, the naked underlying NixOS configuration.
 Getting the derivation for those contents is a bit finicky, since it's not designed to be done manually.
 It's usually taken care of automatically by `nixos-rebuild` (if you're on NixOS) or `nixos-generators` (if you're making an image, as we've been doing up until now).
 Here's what that looks like:
@@ -776,11 +783,11 @@ Other than that we've added `live-config-module` there are basically just two ch
 
 1. Instead of using `nixosGenerate`, we use `lib.nixosSystem`, and then navigate to the `.config.system.build.toplevel` attribute of the result.
 
-2. We manually include the module containing EC2-specific settings.
+2. We manually include the module containing EC2 compatibility settings.
 
 If you change `toplevel` to `amazonImage`, you've actually completely replicated the `nixosGenerate` functionality, and you're back to building an AMI.
 If you've come this far, it's actually worth considering dropping `nixos-generators` altogether, and manually implementing the same functionality.
-You lose a bit of readability, but gain a bit of transparency, and it's good practice with NixOS nuts and bolts.
+You gain some transparency, if you wrap it nicely you don't sacrifice readability, and it's good practice with NixOS nuts and bolts.
 At the very least, I recommend studying the `nixos-generators` source code, since it doesn't actually do that much.
 
 Anyway, with the bootstrap image and live configuration defined, we can pass them to Terraform as input variables.
@@ -822,8 +829,13 @@ This is exactly what we need, and has the additional benefit of only ever copyin
 Once the configuration has been copied, we SSH into the instance, and call the `switch_to_configuration` script in the configuration root.
 We'll also run garbage collection afterwards, since for the purposes of this guide, at least, this is the only time we'll ever create garbage.
 
+> ##### `nixos-rebuild` {-}
+> This way of copying and activating is exactly what `nixos-rebuild` does when you pass the `--target` flag.
+> The interface to `nixos-rebuild` unfortunately doesn't allow us to use it directly, so we have to emulate it.
+> If you want to know more about what it does, it's an ordinary bash script so if you're on NixOS you can simply run `cat $(which nixos-rebuild)` to inspect its contents.
+
 #### The Terraform side
-Now, we just need to capture this in a Terraform resource.
+Now, we just need to capture this upload-and-activate workflow in a Terraform resource.
 
 Every Terraform resource supports running custom actions after they've been instantiated.
 These actions called [_provisioners_](https://www.terraform.io/language/resources/provisioners/syntax), and they are our entry point for inserting custom logic.
@@ -857,8 +869,8 @@ Just duplicate [the `ingress` block](#aws_security_group) and change the port nu
 ### Timing issues
 If you run `terraform apply` in its current state, you'll find that the null resource fails with an SSH timeout.
 The issue is that Terraform will wait until the instance is _provisioned_, but not until it's actually _booted_.
-This is a common issue, with a pretty simple workaround: we simply add a `remote_exec` provisioner that immediately returns.
-`remote_exec` will automatically retry until SSH is up, thereby also delaying downstream resources until SSH works.
+This is a common issue, and fortunately there's a pretty simple workaround: we simply add a `remote_exec` provisioner to the instance that immediately returns.
+`remote_exec` will automatically retry until SSH is up, thereby delaying downstream resources until SSH works.
 
 ```nix
 resource "aws_instance" "iplz_server" {
@@ -875,8 +887,8 @@ resource "aws_instance" "iplz_server" {
 
 ### Automatically adding the instance to `known_hosts`
 The final issue with SSH access is that when `nix-copy-closure` connects to the instance, SSH will give the usual prompt asking the user to confirm that the target is a trusted machine.
-The interactive prompt doesn't play nice with Terraform, and even if it did, it's annoying, so let's make it so we don't have to.
-The most robust way to do so is to first add the server to `~/.ssh/known_hosts` using a `local_exec` provisioner in the `aws_instance`:
+The interactive prompt doesn't play nice with Terraform, and even if it did, it's annoying, so let's remove it.
+As far as I know the most robust way to do so is to first add the server to `~/.ssh/known_hosts` using a `local_exec` provisioner in the `aws_instance`:
 
 ```nix
 resource "aws_instance" "iplz_server" {
@@ -890,8 +902,10 @@ resource "aws_instance" "iplz_server" {
 Deployment
 ----------
 
-Deployment itself should look similar to how it did before, just with one extra resource.
-The gains we've made become very apparent when redeploying, however.
+Deployment itself should look similar to how it did before.
+It's done in the exact same way, it will just take some extra time to wait until SSH is up so it can deploy the live configuration.
+
+The gains we've made become much more apparent when redeploying, however.
 If you change your application and run `nix run .#terraform apply`, it should now look something like this:
 
 ```
@@ -901,10 +915,9 @@ If you change your application and run `nix run .#terraform apply`, it should no
 Plan: 1 to add, 0 to change, 1 to destroy.
 ```
 
-Compared to [before](#redeployment), this only touches the `nixos_deployment` resource.
-Applying should take significantly less time now, and leave the instance itself in place.
+Compared to [before](#redeployment), this only touches the `nixos_deployment` resource, applying should take significantly less time, and it all leaves the instance itself in place.
 
-Again, the final resulting source code can be found on the [`faster-deployment` branch](https://github.com/jonascarpay/iplz/tree/faster-deployment), and as always, don't forget to run `terraform destroy`.
+Again, the final resulting source code can be found on the [`faster-deployment` branch](https://github.com/jonascarpay/iplz/tree/faster-deployment), and as always, don't forget to run `terraform destroy` afterwards.
 
 Final thoughts
 ==============
@@ -912,13 +925,13 @@ Final thoughts
 Where to go from here
 ---------------------
 
-If you've made it this far, here are some suggestions for how to continue the development of your deployment pipeline.
+If you've made it this far, here are some suggestions for how to continue the development of your deployment pipeline and turn it into something production-worthy.
 Some of these are simple tips and tricks, some of these are stubs for what would really deserve its own blog post but serve to at least point you in the right direction.
 
 ### Removing the remaining sources of invalidation
-We have made it easy to make changes by making the live configuration lightweight, but it's still possible to unintentionally change the bootstrap configuration and thereby invalidate all instances.
+We have made it easy to make changes by making the live configuration lightweight, but it's still possible to unintentionally change the bootstrap configuration and thereby invalidate the instance.
 One example of this is when you update `nixpkgs`: the bootstrap configuration depends on `nixpkgs`, so Terraform will see that the bootstrap configuration has changed, which invalidates every instance that was created with that configuration.
-This is extra irritating because once you have a live configuration up and running, the bootstrap AMI doesn't actually have any bearing on the running instance anymore.
+This is extra irritating because once you have a live configuration up and running, the bootstrap configuration doesn't actually have any bearing on the running instance anymore.
 
 In the specific case above you could mitigate this by using separate `nixpkgs` inputs for the bootstrap and live configurations, but doesn't really address the underlying issue, and doesn't completely protect you from accidental invalidation.
 My preferred solution is to actually make the instance completely ignore all changes to its inputs once provisioned:
@@ -947,7 +960,7 @@ Luckily, Nix can actually declaratively manage our providers for us.
 Instead of `pkgs.terraform`, just use `(pkgs.terraform.withPlugins (p: [ p.aws p.null ]))`.
 You'll still need to run `terraform init`, but it won't install anything anymore, and in fact you could even add the resulting files to version control.
 
-Unfortunately, at the time of writing there are some issues with the `null` provider that make going through Terraform as normal the more robust option, but if you try it and it works, there's no reason not to use it.
+Unfortunately, at the time of writing there are some issues with the `null` provider that make going through Terraform as normal the more robust option, but if you try it and it works for your particular setup, there's no reason not to use it.
 
 ### Secret management
 Declarative configuration is often at odds with proper secret management.
@@ -955,29 +968,26 @@ This is doubly so with Nix, where everything Nix touches ends up publicly readab
 I don't have any universal recommendations here, because it all depends on your threat model and attack vectors.
 
 In general, Terraform is better equipped for dealing with secrets than Nix, so if you can go through Terraform that's usually the better option.
-
-Over at [`binplz.dev`](https://github.com/binplz/binplz.dev), we're experimenting with [commiting all secrets to git](https://github.com/binplz/binplz.dev/tree/master/secrets) in encrypted form, and using [age](https://github.com/FiloSottile/age)-based [script](https://github.com/binplz/binplz.dev/blob/master/secrets/decrypt.sh) that lets [trusted users](https://github.com/binplz/binplz.dev/blob/master/secrets/trustees) decrypt them, all in a declarative way.
-This was inspired by the way [agenix](https://github.com/ryantm/agenix) (about which I [wrote before](https://jonascarpay.com/posts/2021-07-27-agenix.html)) works, which we unfortunately can't use directly here.
+You can use provisioners to upload sensitive and automatically interface with your secret management setup.
 
 ### Disk sizing
 With the above setup, your instance will have a single hard drive, whose size is simply the size of the EC2 image.
-That's not ideal, because it's not a very large image, and what little space there is is shared by both the NixOS configuration (which contains the application), and any data the application might generate (databases, anyone)?
-You could just create a larger disk image, but in general it's a better idea to separate your data drive from your OS drive by creating separate EBS volumes.
+That's not ideal, because it's not a very large image, and what little space there is is shared by both the NixOS configuration and application data.
+You could just create a larger disk image, but it's probably a better idea to separate your data drive from your OS drive by creating separate EBS volumes.
 That way you can scale them independently as you see fit.
 
 ### Terraform best practices
 All the Terraform source code is currently in a single `main.tf` file.
-I decided it would be simpler this way, but it does go against [Terraform's module structure conventions](https://www.terraform.io/language/modules/develop/structure).
+I decided on this to keep the guide simple, but it does go against [Terraform's module structure conventions](https://www.terraform.io/language/modules/develop/structure).
 If you use this as the basis of a more serious project you probably want to consider reorganizing the Terraform code.
 
 ### Scaling up and modularizing
 One question you might have is how to extend this approach to multiple instances.
 The answer is actually the same way you duplicate any part of Terraform configuration: you use a [`count`](https://www.terraform.io/language/meta-arguments/count) or [`for_each`](https://www.terraform.io/language/meta-arguments/for_each) clause.
 
-In the case of the spartan approach, you can just slap a `count` on the `aws_instance`, since you only need to duplicate a single resource.
-
-For the more ergonomic approach, you will need also need to duplicate the `nixos_deployment` resource in tandem with the instance.
-The way you do that is by collecting them in a [_module_](https://www.terraform.io/language/modules/develop), and putting the `count`/`for_each` on the module.
+In the case of the spartan approach, you can just slap a `count` on the `aws_instance` resource directly.
+For the more ergonomic approach, things are slightly trickier since you need to duplicate the `nixos_deployment` resource in tandem.
+You do that by collecting the parts that need to be duplicated together in a [_module_](https://www.terraform.io/language/modules/develop), and then putting the `count`/`for_each` clause on the module call.
 
 ### Inverting the dependency
 In the current workflow, Nix precedes Terraform, in the sense that Nix prepares all variables before Terraform runs and uses them.
@@ -991,7 +1001,7 @@ One idea that comes to mind is to use instances' public keys after they've been 
 There's nothing that says you can't use both the spartan and ergonomic approaches in the same deployment.
 
 For example, maybe you use Terraform to manage both testing and production environments.
-In that case, you might want your testing environment to one or a handful of machines that can easily be updated, but your production environment consists of many stateless auto-scaling machines, and the rigidity of the fixed-configuration image is actually kind of nice.
+In that case, maybe your testing environment to consists of a few machines that can easily be updated, but your production environment consists of many stateless auto-scaling machines, where the rigidity of the fixed-configuration image is actually kind of nice.
 
 Ideally, you'd do this in a way where Nix can make different artifacts for different branches, but if necessary you can always manually control deployments with [target resources](https://learn.hashicorp.com/tutorials/terraform/resource-targeting).
 
@@ -999,7 +1009,8 @@ Conclusion
 ----------
 
 And with that, we're done.
-It's undeniably hairy in a few places, but I think it's easily worth it: we now have fast, efficient, end-to-end-declarative deployments.
+It's undeniably hairy in a few places, but first of all, what isn't, and second, I think it's easily worth it: we now have fast, efficient, end-to-end-declarative deployments.
+
 If you've made it this far, thank you very much for reading.
 If you have any comments/questions/suggestions/feedback, or maybe you just found this guide useful and want to let me know, feel free to reach out by sending an email or opening a GitHub issue.
 
