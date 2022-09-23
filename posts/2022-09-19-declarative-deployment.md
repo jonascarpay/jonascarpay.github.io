@@ -27,6 +27,9 @@ If you're confused at any point, you can always consult the [end result's source
 Furthermore, if Nix and Terraform are _completely_ new to you, you might want to look at some more basic tutorials first.
 For Nix, [Serokell's Practical Nix Flakes](https://serokell.io/blog/practical-nix-flakes) should be a solid starting point, and for Terraform, the [official AWS tutorial](https://learn.hashicorp.com/collections/terraform/aws-get-started) should get you up to speed.
 
+To follow along you only need [Nix](https://nixos.org/download.html#download-nix) installed on your system.
+Nix will take care of providing us with a Terraform executable.
+
 I should also mention that we'll be compiling images for x86-64 Linux, so you if you want to follow along you probably want to do so from a x86-64 Linux system, be it natively or from a VM.
 It's possible to do cross-compilation with Nix, but a proper treatment of how to do so is outside the scope of this tutorial.
 
@@ -66,8 +69,8 @@ NixOps does of course boast uniquely tight integration with Nix, but as we'll se
 [`terraform-nixos`](https://github.com/tweag/terraform-nixos) is a Terraform module for managing remote NixOS installations.
 It is [recommended on the NixOS website](https://nixos.org/guides/deploying-nixos-using-terraform.html) as _the_ way to deploy NixOS using Terraform.
 
-My main issue with it is that it is way too opinionated for how little it actually does:
-It is easy to reach a point where you need to tweak its behavior so much that you might as well write something yourself, and when you do, you'll find that it only takes a few dozen lines or so anyway.
+My main issue with it is that it is too opinionated for how little it actually does:
+it is easy to reach a point where you need to tweak its behavior so much that you might as well write something yourself, and when you do, you'll find that it only takes a few dozen lines or so anyway.
 So, ultimately, I think it's a better use of your time to just implement all the deployment code yourself from the get-go.
 
 It is also not being maintained as of the time of this writing.
@@ -968,7 +971,7 @@ This is doubly so with Nix, where everything Nix touches ends up publicly readab
 I don't have any universal recommendations here, because it all depends on your threat model and attack vectors.
 
 In general, Terraform is better equipped for dealing with secrets than Nix, so if you can go through Terraform that's usually the better option.
-You can use provisioners to upload sensitive and automatically interface with your secret management setup.
+You can use provisioners to upload sensitive files and automatically interface with your secret management setup.
 
 ### Disk sizing
 With the above setup, your instance will have a single hard drive, whose size is simply the size of the EC2 image.
@@ -1001,7 +1004,7 @@ One idea that comes to mind is to use instances' public keys after they've been 
 There's nothing that says you can't use both the spartan and ergonomic approaches in the same deployment.
 
 For example, maybe you use Terraform to manage both testing and production environments.
-In that case, maybe your testing environment to consists of a few machines that can easily be updated, but your production environment consists of many stateless auto-scaling machines, where the rigidity of the fixed-configuration image is actually kind of nice.
+In that case, maybe your testing environment consists of a few machines that can easily be updated, but your production environment consists of many stateless auto-scaling machines, where the rigidity of the fixed-configuration image is actually kind of nice.
 
 Ideally, you'd do this in a way where Nix can make different artifacts for different branches, but if necessary you can always manually control deployments with [target resources](https://learn.hashicorp.com/tutorials/terraform/resource-targeting).
 
