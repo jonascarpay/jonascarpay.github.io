@@ -145,7 +145,7 @@ app = falcon.asgi.App()
 app.add_route("/", Server())
 ```
 
-The quickest way to turn it into a buildable python package is to, stick it in a subdirectory, add a [`setup.py`](https://github.com/jonascarpay/iplz/blob/master/app/setup.py) file, and add these two derivations to `flake.nix`:
+The quickest way to turn it into a buildable python package is to stick it in a subdirectory, add a [`setup.py`](https://github.com/jonascarpay/iplz/blob/master/app/setup.py) file, and add these two derivations to `flake.nix`:
 
 ```nix
 iplz-lib = pkgs.python3Packages.buildPythonPackage {
@@ -507,9 +507,10 @@ resource "aws_ebs_snapshot_import" "iplz_import" {
 I don't think that's a coincidence, but I'm not actually sure.
 
 #### [`aws_iam_role`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role), [`aws_iam_policy`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy), and [`aws_iam_role_policy_attachment`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) {#aws_iam_role}
-The goal with these resources is to ultimately run [`aws_ebs_snapshot_import`](#aws_ebs_snapshot_import) with the permissions required to import a VM snapshot.
-IAM (Identity and Access Management) is an extremely complex topic in and of itself, and the Terraform interface to it doesn't always actually make it easier.
-The goal here is to capture the [service role configuration described here](https://docs.aws.amazon.com/vm-import/latest/userguide/required-permissions.html#vmimport-role) in Terraform resources.
+
+The end goal with these three resources is to run [`aws_ebs_snapshot_import`](#aws_ebs_snapshot_import) with the permissions required to import a VM snapshot.
+AWS IAM (Identity and Access Management) is an extremely complex topic in and of itself, and the Terraform interface to it doesn't always actually make it easier.
+What we need to do here is to capture the [service role configuration described here](https://docs.aws.amazon.com/vm-import/latest/userguide/required-permissions.html#vmimport-role) in Terraform resources.
 At the time of writing, the recommended way of doing that is by putting the role configuration in an `aws_iam_role`, the policy configuration in an `aws_iam_policy`, and then attaching the policy to the role with an `iam_role_policy_attachment`.
 
 I've omitted most of the actual policies, since they're just copied verbatim from the previous link.
