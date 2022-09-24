@@ -932,7 +932,7 @@ Where to go from here
 If you've made it this far, here are some suggestions for how to continue the development of your deployment pipeline and turn it into something production-worthy.
 Some of these are simple tips and tricks, some of these are stubs for what would really deserve its own blog post but serve to at least point you in the right direction.
 
-### Removing the remaining sources of invalidation
+### Removing the remaining sources of invalidation {#remaining-invalidations}
 We have made it easy to make changes by making the live configuration lightweight, but it's still possible to unintentionally change the bootstrap configuration and thereby invalidate the instance.
 One example of this is when you update `nixpkgs`: the bootstrap configuration depends on `nixpkgs`, so Terraform will see that the bootstrap configuration has changed, which invalidates every instance that was created with that configuration.
 This is extra irritating because once you have a live configuration up and running, the bootstrap configuration doesn't actually have any bearing on the running instance anymore.
@@ -950,12 +950,17 @@ resource "aws_instance" "iplz_server" {
 ```
 You could be more granular and explicit here by [giving a list of inputs to ignore](https://www.terraform.io/language/meta-arguments/lifecycle), but in this case just using `all` is fine too.
 
-If you don't want to deal with managing your own bootstrap image, you can also consider completely dropping it altogether.
+Alternatively, you can also completely drop the bootstrap image altogether, as described [below](#no-bootstrap).
+
+### Dropping the bootstrap image {#no-bootstrap}
+
+Instead of using your own bootstrap image, you could also just use an off-the-shelf NixOS AMI.
+This saves you the trouble of having to deal with accidental invalidations described [above](#remaining-invalidations), plus it allows you to remove the entire uploading pipeline from the Terraform configuration.
+
 The [AMI Catalog](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-east-1#AMICatalog:) contains many ready-to-run NixOS AMIs that you can use instead of the bootstrap image.
 Just set up SSH access through Terraform, and update the live configuration as normal.
-This saves you the trouble of setting up an S3 bucket just to bootstrap your server, and after the live configuration has been uploaded you won't be able to tell the difference.
 
-Personally, I like the control that having my own image provides, but both approaches are valid.
+Personally, I like the control [and flexibility](#mixing-approaches) that having my own image provides, but there's a lot to be said for the alternative.
 
 ### Have Nix manage Terraform providers
 You could argue that we're not completely declarative because we have to install Terraform providers with `terraform init` before we can actually use it.
@@ -1001,7 +1006,7 @@ This is obviously a bit trickier to set up, but it would give the interesting ab
 
 One idea that comes to mind is to use instances' public keys after they've been provisioned, for example to grant them access to downstream resources, or to use an [`agenix`](https://github.com/ryantm/agenix)-based secret management workflow.
 
-### Mixing the two approaches
+### Mixing the two approaches {#mixing-approaches}
 There's nothing that says you can't use both the spartan and ergonomic approaches in the same deployment.
 
 For example, maybe you use Terraform to manage both testing and production environments.
