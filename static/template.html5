@@ -15,9 +15,9 @@ $endif$
 $if(keywords)$
   <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
 $endif$
-$if(description-meta)$
-  <meta name="description" content="$description-meta$" />
-  <meta property="og:description" content="$description-meta$" />
+$if(abstract)$
+  <meta name="description" content="$abstract$" />
+  <meta property="og:description" content="$abstract$" />
 $endif$
   <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
   <meta property="og:title" content="$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$" />
