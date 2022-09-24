@@ -1020,7 +1020,7 @@ Conclusion
 And with that, we're done.
 It's undeniably hairy in a few places, but first of all, what isn't, and second, I think it's easily worth it: we now have fast, efficient, end-to-end-declarative deployments.
 
-If you've made it this far, thank you very much for reading.
+Thank you very much for reading.
 If you have any comments/questions/suggestions/feedback, or maybe you just found this guide useful and want to let me know, feel free to reach out by sending an email or opening a GitHub issue.
 
 Thanks to [Dennis Gosnell](https://functor.tokyo/) and [Viktor Kronvall](https://github.com/considerate/) for their feedback while writing this post.
