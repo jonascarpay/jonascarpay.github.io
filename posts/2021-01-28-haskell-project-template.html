@@ -6,12 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:creator" content="@jonascarpay" />
-  <meta name="dcterms.date" content="2021-01-28" />
-  <meta name="description" content="How to set up a Haskell project using Haskell.nix" />
-  <meta property="og:description" content="How to set up a Haskell project using Haskell.nix" />
-  <title>The working programmer’s guide to setting up Haskell projects</title>
-  <meta property="og:title" content="The working programmer’s guide to setting up Haskell projects" />
-  <meta property="twitter:title" content="The working programmer’s guide to setting up Haskell projects" />
+  <title>2021-01-28-haskell-project-template</title>
+  <meta property="og:title" content="2021-01-28-haskell-project-template" />
+  <meta property="twitter:title" content="2021-01-28-haskell-project-template" />
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -95,10 +92,64 @@
 <div class="header">
 	<a href="../index.html">&larr; Back</a>
 </div>
-<header id="title-block-header">
-<h1 class="title">The working programmer’s guide to setting up Haskell projects</h1>
-<p class="date">2021-01-28</p>
-</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#the-goal"><span class="toc-section-number">1</span> The goal</a>
+<ul>
+<li><a href="#no-global-state">No global state</a></li>
+<li><a href="#modern-tooling">Modern tooling</a></li>
+<li><a href="#minimal-configuration">Minimal configuration</a></li>
+</ul></li>
+<li><a href="#the-solution"><span class="toc-section-number">2</span> The solution</a>
+<ul>
+<li><a href="#why-not-just-use">Why not just use…</a></li>
+</ul></li>
+<li><a href="#setup"><span class="toc-section-number">3</span> Setup</a>
+<ul>
+<li><a href="#preliminary-setup">Preliminary setup</a></li>
+<li><a href="#a-note-on-flakes">A note on flakes</a></li>
+<li><a href="#project-setup">Project setup</a></li>
+</ul></li>
+<li><a href="#adding-files-to-your-project"><span class="toc-section-number">4</span> Adding files to your project</a></li>
+<li><a href="#building"><span class="toc-section-number">5</span> Building</a>
+<ul>
+<li><a href="#building-with-nix-cabal">Building with Nix + Cabal</a></li>
+<li><a href="#building-with-nix">Building with Nix</a></li>
+</ul></li>
+<li><a href="#troubleshooting"><span class="toc-section-number">6</span> Troubleshooting</a>
+<ul>
+<li><a href="#something-doesnt-work">Something doesn’t work</a></li>
+<li><a href="#nix-evaluation-is-slow">Nix evaluation is slow!</a></li>
+<li><a href="#the-shell-is-slow">The shell is slow!</a></li>
+<li><a href="#i-get-warnings-when-i-build-the-projectenter-my-nix-shell">I get warnings when I build the project/enter my <code>nix-shell</code>!</a></li>
+<li><a href="#why-is-ci-building-ghc">Why is CI building GHC?</a></li>
+<li><a href="#i-cannot-rebuild-without-a-network-connection">I cannot rebuild without a network connection?</a></li>
+</ul></li>
+</ul>
+<hr />
+</nav>
+<table>
+<tbody>
+<tr class="odd">
+<td>title: The working programmer’s guide to setting up Haskell projects</td>
+</tr>
+<tr class="even">
+<td>date: 2021-01-28</td>
+</tr>
+<tr class="odd">
+<td>tags: haskell nix project cabal hls</td>
+</tr>
+<tr class="even">
+<td>abstract: How to set up a Haskell project using Haskell.nix</td>
+</tr>
+<tr class="odd">
+<td>toc: false</td>
+</tr>
+</tbody>
+</table>
+<p><strong>2022/11/06 Update</strong></p>
+<p>I no longer recommend the approach explained here. Things have changed, the regular Nix infrastructure works better for 99% of people. I might properly update this post at some point, but for now, the <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a> repo has a <code>no-haskell-nix</code> branch that you can use. It works the exact same way, just clone and run the <code>wizard.sh</code> script.</p>
+<hr />
 <p><strong>tl;dr:</strong> Nothing beats Haskell.nix for features and flexibility. To get started quickly, use the <a href="https://github.com/jonascarpay/template-haskell">template-haskell</a> project template.</p>
 <hr />
 <p>If you’ve ever tried to set up a Haskell project, you know that it can be extremely frustrating to get to a point where everything just werks<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Of course, just compiling a project is not <em>that</em> hard, it’s when you have multiple projects, spanning multiple compiler versions, all requiring tooling compiled with the right GHC version, that things quickly turn into a mess. In this post I will outline what I think is currently the best way of setting up a Haskell project.</p>
