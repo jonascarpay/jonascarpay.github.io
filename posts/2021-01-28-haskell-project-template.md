@@ -4,9 +4,18 @@ date: 2021-01-28
 tags: haskell nix project cabal hls
 abstract: How to set up a Haskell project using Haskell.nix
 toc: false
+----------
+
+**2022/11/06 Update**
+
+The regular Nix infrastructure has improved, and now works better in 99% of cases.
+I no longer use the approach described below myself.
+I might properly update this post at some point, but for now, the [template-haskell](https://github.com/jonascarpay/template-haskell) repo has a `no-haskell-nix` branch that you can use.
+It works the exact same way, just clone and run the `wizard.sh` script.
+
 ---
 
-**tl;dr:** 
+**tl;dr:**
 Nothing beats Haskell.nix for features and flexibility.
 To get started quickly, use the [template-haskell](https://github.com/jonascarpay/template-haskell) project template.
 
@@ -22,16 +31,19 @@ If you're just starting out with Haskell, this guide is not for you.
 You're probably best off just using [Stack](https://www.fpcomplete.com/haskell/get-started/).
 You will know when you're ready.
 
-# The goal
+The goal
+========
 
 This is what I consider project nirvana:
 
-## No global state {-}
+No global state {-}
+-------------------
 
 GHC and tooling is far too sensitive to version issues and name clashes to have things globally installed.
 Every project should have its own dedicated shell which contains the right tools.
 
-## Modern tooling {-}
+Modern tooling {-}
+------------------
 
 When we enter our shell, all parts of a modern Haskell setup should be available.
 By this I mean
@@ -47,11 +59,13 @@ We should be able to change the GHC version without breaking our tooling.
 
 [^2]: `hlint` and `ghcid` are somewhat obviated by HLS, but I like having them around for CI and running tests, respectively.
 
-## Minimal configuration {-}
+Minimal configuration {-}
+-------------------------
 
 From deciding I want to make a project, to opening my editor and writing Haskell code cannot take more than 30 seconds.
 
-# The solution
+The solution
+============
 
 In my opinion, the key to get to this point is by using one of Haskell's best kept secrets, [IOHK's `haskell.nix`](https://github.com/input-output-hk/haskell.nix).
 It is a collection of nix tools that are meant to replace the default Nix Haskell infrastructure.
@@ -64,7 +78,8 @@ I realize that is a non-starter for some people, and that's OK, we can still be 
 
 [^3]: If you want to start from scratch you might need to copy and paste some Nix from the Haskell.nix manual.
 
-## Why not just use... {-}
+Why not just use... {-}
+-----------------------
 
 ### ...Stack/Cabal {-}
 As mentioned in the intro, getting all your tools to work properly can be very finicky, since the tools and your project all need to be compiled with the same version of GHC.
@@ -75,15 +90,18 @@ Haskell.nix makes this a non-issue.
 As nice as Nix is, setting up a Haskell project and development environment in Nix can get very involved.
 Haskell.nix standardizes, streamlines, and automates the entire process, allowing you to focus on writing Haskell instead of Nix.
 
-# Setup
+Setup
+=====
 
-## Preliminary setup {-}
+Preliminary setup {-}
+---------------------
 First, you need the [nix package manager](https://nixos.org/).
 
 Second, you need to set up the [IOHK binary cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html#setting-up-the-binary-cache).
 _Technically_ this is optional, but if you don't you will build GHC from scratch, which takes... a while.
 
-## A note on flakes {-}
+A note on flakes {-}
+--------------------
 You may have heard of nix's upcoming[^flake] new _flakes_ feature.
 Flakes are a standardised and composable way of defining nix packages, and a natural fit for `haskell.nix`.
 Flakes are generally my preferred way of defining packages, but unfortunately, the feature is not very stable yet, which makes it hard for me to recommend it to beginners.
@@ -91,7 +109,8 @@ If you're already using flakes though, take a look at the [`flakes` branch of `t
 
 [^flake]: it's been upcoming for a long time.
 
-## Project setup {-}
+Project setup {-}
+-----------------
 Unlike, say, Stack, Haskell.nix is _just_ a Nix library, so it doesn't have any CLI tools that create a project for you.
 For that reason, you're going to want to use a project template that you copy whenever you start a new project.
 The Haskell.nix parts are going to be the exact same between your projects, so this should be very easy.
@@ -131,18 +150,21 @@ Once you've set up your project and shell, you can pretty much copy/share these 
 To turn your project into an actual template, you can make things as simple or fancy as you want.
 As mentioned above, in `template-haskell`, I just use a simple shell script that replaces a few placeholder strings, but if you want you could use something like [cookiecutter](https://github.com/cookiecutter/cookiecutter).
 
-# Adding files to your project
+Adding files to your project
+============================
 
 Unlike the normal nix behavior, by default, **Haskell.nix only sees files that are known to git.**
 They can have changes, but a new file that has not at least been staged is completely invisible to Haskell.nix.
 If you run into issues building or entering the shell, always first make sure that all relevant files have at least been staged.
 
-# Building
+Building
+========
 
 You actually have two ways of building a project; purely with Nix or with Nix + Cabal.
 They have slightly different use cases, so it's probably a good idea to familiarize yourself with both.
 
-## Building with Nix + Cabal {-}
+Building with Nix + Cabal {-}
+-----------------------------
 
 This is probably closest to what you are already familiar with, and the one you typically use during development.
 You simply enter your project shell, and `cabal new-build` as normal:
@@ -154,7 +176,8 @@ nix-shell$ cabal new-build
 
 Everything here is as normal, except for the fact that Cabal doesn't have to worry about package databases, resolving and compiling dependencies, or GHC versions.
 
-## Building with Nix {-}
+Building with Nix {-}
+---------------------
 
 Haskell.nix also provides pure Nix derivations for your project.
 This means that instead of polluting your project directory with build artifacts, they end up in the Nix store, where they get garbage collected automatically.
@@ -188,30 +211,37 @@ nix-repl> hsPkgs.<my-package>.components.|
 
 If you then press tab, the completion shows you the available components.
 
-# Troubleshooting
+Troubleshooting
+===============
 
-## Something doesn't work {-}
+Something doesn't work {-}
+--------------------------
 If you're like me, you probably just forgot to stage a file in git.
 
-## Nix evaluation is slow! {-}
+Nix evaluation is slow! {-}
+---------------------------
 See [Materialization](https://input-output-hk.github.io/haskell.nix/tutorials/materialization.html) or consider switching to flakes.
 
-## The shell is slow! {-}
+The shell is slow! {-}
+----------------------
 See the point about Materialization above, and/or consider using [`lorri`](https://github.com/target/lorri), [`cached-nix-shell`](https://github.com/xzfc/cached-nix-shell), or my personal favorite, [`nix-direnv`](https://github.com/nix-community/nix-direnv).
 Nix flakes also helps out here.
 
-## I get warnings when I build the project/enter my `nix-shell`! {-}
+I get warnings when I build the project/enter my `nix-shell`! {-}
+-----------------------------------------------------------------
 This is also related to materialization, if you properly configure materialization the warnings will disappear.
 You can safely ignore these warnings, though, and I usually don't bother.
 
-## Why is CI building GHC? {-}
+Why is CI building GHC? {-}
+---------------------------
 
 `template-haskell` also contains a CI matrix.
 The Nix pipeline uses cachix to cache builds, specifically the `jmc` cachix.
 You don't have push access to this, so if you change something that triggers a GHC change it will be rebuilt every time.
 I recommend you create and set up your own personal cachix.
 
-## I cannot rebuild without a network connection? {-}
+I cannot rebuild without a network connection? {-}
+--------------------------------------------------
 
 This happens when nix tries to fetch one of the intermediate derivations from cache.
 Simply build with `--option substituters ""` to disable cache lookup.
