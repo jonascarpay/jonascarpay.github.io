@@ -58,11 +58,12 @@ with Terraform and Nix</title>
 			</description>
 		</item>
 		<item>
-			<title></title>
+			<title>The working programmer’s guide to setting up Haskell
+projects</title>
 			<link>https://jonascarpay.com/posts/2021-01-28-haskell-project-template.html</link>
 			<guid isPermaLink="false">https://jonascarpay.com/posts/2021-01-28-haskell-project-template.html</guid>
 			<description>
-				
+				How to set up a Haskell project using Haskell.nix
 			</description>
 		</item>
 		<item>
