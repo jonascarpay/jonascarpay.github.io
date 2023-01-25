@@ -1,6 +1,6 @@
 ---
 title: I'm available for hire!
-date: 2022-08-20
+date: 2023-01-20
 ---
 
 I am looking for the next challenge in my career!
