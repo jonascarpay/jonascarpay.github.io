@@ -4,7 +4,7 @@ date: 2021-01-28
 tags: haskell nix project cabal hls
 abstract: How to set up a Haskell project using Haskell.nix
 toc: false
-----------
+...
 
 **2022/11/06 Update**
 
