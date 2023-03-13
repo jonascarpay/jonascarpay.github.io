@@ -8,10 +8,15 @@ toc: false
 
 **2022/11/06 Update**
 
-The regular Nix infrastructure has improved, and now works better in 99% of cases.
-I no longer use the approach described below myself.
-I might properly update this post at some point, but for now, the [template-haskell](https://github.com/jonascarpay/template-haskell) repo has a `no-haskell-nix` branch that you can use.
-It works the exact same way, just clone and run the `wizard.sh` script.
+This guide advocates using [haskell.nix](https://github.com/input-output-hk/haskell.nix) for setting up your Haskell projects.
+Since I originally wrote this post, the default nixpkgs Haskell infrastructure has improved, and now works better in 99% of cases.
+So, I don't recommend using this guide anymore.
+
+That said, while some details are now outdated, the gist remains the same:
+I still think Nix is the easiest way of setting up a modern Haskell development environment.
+The [template-haskell](https://github.com/jonascarpay/template-haskell) has been updated to no longer use Haskell.nix, and it's still a great starting point.
+As before, just clone it, run the `./wizard.sh` script to replace the placeholders, and you're good to go.
+I might update this post at some point, but for now, all the Nix bits are now entirely contained in `flake.nix`, so if you want to know more about how it works I recommend studying that file.
 
 ---
 
