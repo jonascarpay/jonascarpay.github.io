@@ -33,13 +33,6 @@ for post in $POSTS; do
   pandoc "$post" -t plain --template=static/rss_entry -V url="$URL" >>"$TMP/rss_body"
 done
 
-pandoc "pages/hireme.md" \
-  -o "$out/hireme.html" \
-  --standalone \
-  -c style.css \
-  --include-after-body=static/back.html \
-  --template=static/template.html5
-
 pandoc static/toc_header.html "$TMP/toc.html" \
   -o "$out/index.html" \
   --standalone \
