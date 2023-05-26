@@ -101,96 +101,98 @@
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#nixos-configuration"><span class="toc-section-number">1</span> NixOS configuration</a>
+<li><a href="#example"><span class="toc-section-number">1</span> Example</a></li>
+<li><a href="#age-and-agenix"><span class="toc-section-number">2</span> <code>age</code> and <code>agenix</code></a></li>
+<li><a href="#usage"><span class="toc-section-number">3</span> Usage</a>
 <ul>
-<li><a href="#example"><span class="toc-section-number">1.1</span> Example</a></li>
+<li><a href="#decryption-nixos-module-configuration"><span class="toc-section-number">3.1</span> Decryption: NixOS module configuration</a></li>
+<li><a href="#encryption-the-agenix-cli"><span class="toc-section-number">3.2</span> Encryption: The <code>agenix</code> CLI</a></li>
 </ul></li>
-<li><a href="#working-with-secrets"><span class="toc-section-number">2</span> Working with secrets</a></li>
-<li><a href="#caveats"><span class="toc-section-number">3</span> Caveats</a>
+<li><a href="#caveats"><span class="toc-section-number">4</span> Caveats</a>
 <ul>
-<li><a href="#configuration"><span class="toc-section-number">3.1</span> Configuration</a></li>
-<li><a href="#some-thoughts-on-security"><span class="toc-section-number">3.2</span> Some thoughts on security</a></li>
+<li><a href="#configuration"><span class="toc-section-number">4.1</span> Configuration</a></li>
+<li><a href="#some-thoughts-on-security"><span class="toc-section-number">4.2</span> Some thoughts on security</a></li>
 </ul></li>
 </ul>
 <hr />
 </nav>
-<p>It’s considered bad practice to put sensitive information into your Nix configuration unencrypted. The primary concern is that anything Nix touches ends up in the Nix store, and the store is readable to every process and user on your computer. The second concern is that your configuration files themselves are now sensitive, so you can’t share them on GitHub or other public channels. So, how <em>do</em> you effectively manage your secrets? There are actually <a href="https://nixos.wiki/wiki/Comparison_of_secret_managing_schemes">many</a> proposed solutions to this issue, but I have generally found them to not be worth the hassle, and instead just always set them up manually. That is, until I discovered <a href="https://github.com/ryantm/agenix"><code>agenix</code></a>.</p>
-<p><code>agenix</code> requires almost no setup or overhead, and yet works seamlessly across multiple machines and users. We use it at <code>$work</code>, I <a href="https://github.com/jonascarpay/nix/tree/master/secrets">use it in my personal config</a>, and I have been very happy with it.</p>
+<p>Dealing with sensitive information in Nix is tricky. The primary concern is that Nix is insecure by default – anything Nix touches ends up in the Nix store, and the store is readable to every process and user on your computer. The second concern is that putting secrets in your configuration means that you now have to be careful about never leaking your configuration by, say, putting it in a public repo. Both of these issues become larger the larger and more distributed your infrastructure is.</p>
+<p>So, how <em>do</em> you effectively manage your secrets? There are <a href="https://nixos.wiki/wiki/Comparison_of_secret_managing_schemes">many</a> proposed solutions to this issue, but I have generally found them to not be worth the hassle, and instead just manually deployed secrets to my machines. That is, until I discovered <a href="https://github.com/ryantm/agenix"><code>agenix</code></a>.</p>
+<p>I can’t overstate how right <code>agenix</code> managed to get this. It requires almost no setup or overhead, and works seamlessly across multiple machines and users. We use it at <code>$work</code>, I <a href="https://github.com/jonascarpay/nix/tree/master/secrets">use it in my personal config</a>, and I have not looked back.</p>
 <p>Unfortunately, I find that <a href="https://github.com/ryantm/agenix#readme">the manual</a> makes <code>agenix</code> seem more complicated than it is, and doesn’t really highlight what makes it so nice to use. So, here is <del>more evangelism for niche technologies</del> a brief, opinionated guide to <code>agenix</code>.</p>
-<h1 data-number="1" id="nixos-configuration"><span class="header-section-number">1</span> NixOS configuration</h1>
-<p>Start by importing the <code>agenix</code> module into your system configuration. The most straightforward way is just importing the tarball directly<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, but you can of course use your preferred method of dependency management here (niv, flakes, channels, etc.).</p>
-<p>Now, for every secret, you pass it an <code>age</code>-encrypted file as an argument, you ask (or specify) where the decrypted file goes, and then <em>at boot time</em> the file gets decrypted and put in the promised location. That’s it.</p>
-<h2 data-number="1.1" id="example"><span class="header-section-number">1.1</span> Example</h2>
-<p>As an example, let’s say we’re setting up an OpenVPN configuration:</p>
+<h1 data-number="1" id="example"><span class="header-section-number">1</span> Example</h1>
+<p>First, I want to give a little taste of how <code>agenix</code> tackles this problem. As an example, let’s say we’re setting up an OpenVPN configuration:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Option 1</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass path/to/credentials.txt</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Option 2</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass </span>${./path/to/credentials.txt}</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Option 1 avoids the Nix store, but it is not declarative; we need to manually make sure that the <code>path/to/credentials.txt</code> actually exists.</p>
+<p>With option 2, we have Nix manage the file for us, but now it ends up in the Nix store, making it world-readable.</p>
+<p>With <code>agenix</code>, we get the best of both worlds. Our configuration looks like this:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Option 1</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  age.secrets.myServerCredentials.file = path/to/credentials.age;</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass path/to/credentials.txt</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass </span>${config.age.secrets.myServerCredentials.path}</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Option 2</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass </span>${./path/to/credentials.txt}</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>Option 1 avoids the nix store, but it is not declarative; we need to manually make sure that the <code>path/to/credentials.txt</code> actually exists.</p>
-<p>With option 2, we have nix manage the file for us, but now it ends up in the nix store, making it world-readable.</p>
-<p>With <code>agenix</code>, we get the best of both worlds:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  age.secrets.myServerCredentials.file = path/to/credentials.age;</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  services.openvpn.myServer.config = <span class="st">&#39;&#39;</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="st">    auth-user-pass </span>${config.age.secrets.myServerCredentials.path}</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">  &#39;&#39;</span>;</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>The only thing nix ever sees is the encrypted <code>.age</code> file, so no unencrypted secrets will touch the nix store. By default, <code>config.age.secrets.myServerCredentials.path</code> will evaluate to <code>/run/secrets/myServerCredentials</code>. During early boot our file gets decrypted and put there.</p>
-<p>That’s all there is to it in terms of configuration, but it leaves questions like how you actually encrypt your file, or how the system decrypts the file.</p>
-<h1 data-number="2" id="working-with-secrets"><span class="header-section-number">2</span> Working with secrets</h1>
-<p><code>agenix</code> is powered by <a href="https://github.com/FiloSottile/age"><code>age</code></a>. <code>age</code> doesn’t have many features<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, but it does have two that make it ideal for this use case: multiple recipients, and encryption using SSH keys.</p>
-<p>You have an SSH key, and your systems each have SSH keys<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. Yours is the one typically found in <code>~/.ssh/</code>, and the one for your system is in <code>/etc/ssh/</code> (or reported by <code>ssh-keyscan localhost</code>). This is perfect because (again) <code>age</code> can use SSH keys for encryption, and more importantly these are <em>exactly</em> the recipients of secrets: you, because you want to view/edit secrets, and your systems, because they need to decrypt them at boot. In other words, all the cryptographic infrastructure <code>agenix</code> uses is already in place! This is why there was so little configuration required in the previous step, and fortunately this also extends to actually setting up/working with our secrets.</p>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>The only thing Nix ever sees is the encrypted <code>.age</code> file, so no unencrypted secrets will end up in the nix store. During early boot, <code>agenix</code> will take the encrypted file out of the nix store, decrypt it, and put it in <code>config.age.secrets.myServerCredentials.path</code> (defaults to <code>/run/secrets/myServerCredentials</code>).</p>
+<h1 data-number="2" id="age-and-agenix"><span class="header-section-number">2</span> <code>age</code> and <code>agenix</code></h1>
+<p><code>agenix</code> is powered by <a href="https://github.com/FiloSottile/age"><code>age</code></a>. As you want from a cryptographic application, <code>age</code> is extremely light on features (<em>cough</em> PGP <em>cough</em>), but it does have two that make it ideal for this use case: encryption using SSH keys, and multiple recipients. Multiple recipients just means that we encrypt with multiple keys, allowing anyone that has just one of them to decrypt.</p>
+<p>You, the user, have an SSH key, and your machines have SSH keys<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. Yours is the one typically found in <code>~/.ssh/</code>, and the one for your system is in <code>/etc/ssh/</code> (or reported by <code>ssh-keyscan localhost</code>). <code>agenix</code>’s big insight is that this is all we need to leverage <code>age</code> for robust secret management infrastructure.</p>
+<p>When we put a secret in our Nix configuration, we use the <code>agenix</code> command-line tool to encrypt it with both the user’s and the system’s public keys as recipients. This way, the user can still view and edit the keys, and the <code>agenix</code> NixOS module can now decrypt the secrets <em>at boot</em> using the system key, and put them in their desired place.</p>
+<h1 data-number="3" id="usage"><span class="header-section-number">3</span> Usage</h1>
+<p>Configuration consists of two parts; configuring the NixOS module and configuring the <code>agenix</code> command-line tool, or decryption and encryption, respectively.</p>
+<h2 data-number="3.1" id="decryption-nixos-module-configuration"><span class="header-section-number">3.1</span> Decryption: NixOS module configuration</h2>
+<p>Start by importing the <code>agenix</code> module into your system configuration, using your Nix dependency-management tool of choice (flakes, channels, niv, <code>builtins.fetchTarball</code>, etc.). We actually already saw the NixOS module’s configuration in its entirety in the OpenVPN example above; set <code>age.secrets.myServerCredentials.file</code>, and read <code>age.secrets.myServerCredentials.path</code>. There’s some additional fields that allow you to control mode flags etc., but the defaults usually work fine. As long as the configured secrets can actually be decrypted with the system’s SSH key, that’s all the setup needed.</p>
+<h2 data-number="3.2" id="encryption-the-agenix-cli"><span class="header-section-number">3.2</span> Encryption: The <code>agenix</code> CLI</h2>
 <p>Let’s see how we actually encrypt a file.</p>
 <ol type="1">
-<li><p>Start by making a folder in your nix config called <code>secrets</code>. This folder will contain your secrets, as well as a <code>secrets.nix</code> file.</p></li>
-<li><p>In the <code>secrets</code> folder, create your <code>secrets.nix</code> file. <code>secrets.nix</code> determines what files are encrypted with what keys. While <code>secrets.nix</code> is a nix file, it is not in any way actually part of the rest of your nix configuration, you never import it anywhere. It is only used when encrypting secrets (which we will do in the next step), it dictates what files can be viewed with what public keys. This is the example <code>secrets.nix</code> file from <a href="https://github.com/ryantm/agenix#tutorial">the tutorial</a>:</p></li>
+<li><p>Start by making a folder in your Nix config called <code>secrets</code>.</p></li>
+<li><p>In the <code>secrets</code> folder, create a file called <code>secrets.nix</code>. <code>secrets.nix</code> contains all relevant public keys, and determines what files are encrypted with what keys. While <code>secrets.nix</code> is a Nix file, it is not in any way actually part of the rest of your NixOS configuration; you never import it or otherwise refer to it in your NixOS configuration. This is the example <code>secrets.nix</code> file from <a href="https://github.com/ryantm/agenix#tutorial">the tutorial</a>:</p></li>
 </ol>
-<div class="sourceCode" id="cb4"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  user1 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL0idNvgGiucWgup/mP78zyC23uFjYq0evcWdjGQUaBH&quot;</span>;</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  user2 = <span class="st">&quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoQ9S7V+CufAgwoehnf2TqsJ9LTsu8pUA3FgpS2mdVwcMcTs++8P5sQcXHLtDmNLpWN4k7NQgxaY1oXy5e25x/4VhXaJXWEt3luSw+Phv/PB2+aGLvqCUirsLTAD2r7ieMhd/pcVf/HlhNUQgnO1mupdbDyqZoGD/uCcJiYav8i/V7nJWJouHA8yq31XS2yqXp9m3VC7UZZHzUsVJA9Us5YqF0hKYeaGruIHR2bwoDF9ZFMss5t6/pzxMljU/ccYwvvRDdI7WX4o4+zLuZ6RWvsU6LGbbb0pQdB72tlV41fSefwFsk4JRdKbyV3Xjf25pV4IXOTcqhy+4JTB/jXxrF&quot;</span>;</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  users = [ user1 user2 ];</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  system1 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPJDyIr/FSz1cJdcoW69R+NrWzwGK/+3gJpqD1t8L2zE&quot;</span>;</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  system2 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKzxQgondgEYcLpcPdJLrTdNgZ2gznOHCAxMdaceTUT1&quot;</span>;</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  systems = [ system1 system2 ];</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">in</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;secret1.age&quot;</span>.publicKeys = [ user1 system1 ];</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;secret2.age&quot;</span>.publicKeys = users ++ systems;</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  user1 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL0idNvgGiucWgup/mP78zyC23uFjYq0evcWdjGQUaBH&quot;</span>;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  user2 = <span class="st">&quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoQ9S7V+CufAgwoehnf2TqsJ9LTsu8pUA3FgpS2mdVwcMcTs++8P5sQcXHLtDmNLpWN4k7NQgxaY1oXy5e25x/4VhXaJXWEt3luSw+Phv/PB2+aGLvqCUirsLTAD2r7ieMhd/pcVf/HlhNUQgnO1mupdbDyqZoGD/uCcJiYav8i/V7nJWJouHA8yq31XS2yqXp9m3VC7UZZHzUsVJA9Us5YqF0hKYeaGruIHR2bwoDF9ZFMss5t6/pzxMljU/ccYwvvRDdI7WX4o4+zLuZ6RWvsU6LGbbb0pQdB72tlV41fSefwFsk4JRdKbyV3Xjf25pV4IXOTcqhy+4JTB/jXxrF&quot;</span>;</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  users = [ user1 user2 ];</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  system1 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPJDyIr/FSz1cJdcoW69R+NrWzwGK/+3gJpqD1t8L2zE&quot;</span>;</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  system2 = <span class="st">&quot;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKzxQgondgEYcLpcPdJLrTdNgZ2gznOHCAxMdaceTUT1&quot;</span>;</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  systems = [ system1 system2 ];</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">in</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;secret1.age&quot;</span>.publicKeys = [ user1 system1 ];</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;secret2.age&quot;</span>.publicKeys = users ++ systems;</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <ol start="3" type="1">
-<li>Use <code>agenix -e &lt;filename&gt;</code> to edit files. One thing to note is that the system module doesn’t install the <code>agenix</code> executable – you still need to get that somewhere. In my flake-based config it’s just</li>
+<li>From the <code>secrets</code> directory, use <code>agenix -e &lt;filename&gt;</code> to edit files. One thing to note is that the system module doesn’t install the <code>agenix</code> executable so you still need to get that somewhere. In my flake-based config I do this:</li>
 </ol>
-<div class="sourceCode" id="cb5"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>{ environment.systemPackages = [ inputs.agenix.defaultPackage.<span class="st">&quot;</span>${system}<span class="st">&quot;</span> ]; }</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>{ environment.systemPackages = [ inputs.agenix.packages.${system}.agenix ]; }</span></code></pre></div>
 <p>That’s it! You now have secure declarative management of secrets. The only other thing to be aware of is that you need to rekey your secrets if you change what files have access to them, which is a matter of running <code>agenix --rekey</code>.</p>
-<h1 data-number="3" id="caveats"><span class="header-section-number">3</span> Caveats</h1>
-<h2 data-number="3.1" id="configuration"><span class="header-section-number">3.1</span> Configuration</h2>
-<p>One thing to watch out for is that incorporating your secrets into your config is not always as easy as it is in the OpenVPN example above. You might want to use secrets for options that were not designed to be kept secret, or use <code>agenix</code> for things that aren’t configured through nix at all.</p>
+<h1 data-number="4" id="caveats"><span class="header-section-number">4</span> Caveats</h1>
+<h2 data-number="4.1" id="configuration"><span class="header-section-number">4.1</span> Configuration</h2>
+<p>One thing to watch out for is that incorporating your secrets into your config is not always as easy as it is in the OpenVPN example above. You might want to use secrets for options that were not designed to be kept secret, or use <code>agenix</code> for things that aren’t configured through Nix at all.</p>
 <p>Two examples from my own config:</p>
 <ol type="1">
-<li><p>I want to add secret binary caches, but the <code>nix.binaryCaches</code> option only takes strings, it does not take file paths. That means there is no way of using the option without it ending up in the nix store. So, I sidestep the usual cache declaration mechanism and <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L4">go through <code>nix.extraOptions</code> and the new <code>!include</code> directive</a>.</p></li>
-<li><p>AWS credentials aren’t configured through nix, it relies on a file being present in a designated location in your root/user folder. So, we just override the target path so it <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L8">writes to <code>/root/.aws/credentials</code> directly</a>.</p></li>
+<li><p>I want to add secret binary caches, but the <code>nix.binaryCaches</code> option only takes strings, it does not take file paths. So, I sidestep the usual cache declaration mechanism and <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L4">go through <code>nix.extraOptions</code> and the new <code>!include</code> directive</a>.</p></li>
+<li><p>AWS credentials aren’t configured through Nix, it relies on a file being present in a designated location in your root/user folder. So, we just override the target path so it <a href="https://github.com/jonascarpay/nix/blob/0d6fde33df85fe1b97a0fda79299ff4096c38f3d/system/xc-cache.nix#L8">writes to <code>/root/.aws/credentials</code> directly</a>.</p></li>
 </ol>
-<p>The takeaway is that sometimes it just requires some creativity, but it is not unimaginable that you have secrets for which <code>agenix</code> just does not work out. As far as I know this is mostly just an issue with nix itself, and applies to all secret management solutions.</p>
-<h2 data-number="3.2" id="some-thoughts-on-security"><span class="header-section-number">3.2</span> Some thoughts on security</h2>
-<p>I am not a security expert, the author of <code>agenix</code> <a href="https://github.com/ryantm/agenix#threat-modelwarnings">is not a security expert</a>, so if you’re like me, you may be hesitant of trusting <code>agenix</code> with your secrets. I’m not here to convince <em>you</em> of anything, but here are some findings that I personally found convincing.</p>
-<p>First of all, the <a href="https://github.com/FiloSottile">author of <code>age</code> itself <em>is</em> a security expert</a>. I found <a href="https://neilmadden.blog/2019/12/30/a-few-comments-on-age/">some discussion of <em>potential</em> attack vectors against <code>age</code></a>, but based on <em>my understanding</em> of <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html">the underlying reasoning</a>, this would not apply to <code>agenix</code> since we’re not dealing with not high-volume network traffic all encrypted with the same key.</p>
-<p>Second, you can very easily audit <code>agenix</code> yourself, it’s just <a href="https://github.com/ryantm/agenix/blob/master/pkgs/agenix.nix">150 lines of pretty understandable bash in the encryption code</a>, and <a href="https://github.com/ryantm/agenix/blob/master/modules/age.nix">another 100 in the nix module</a>.</p>
+<p>The takeaway is that you might encounter situations that require some creativity.</p>
+<h2 data-number="4.2" id="some-thoughts-on-security"><span class="header-section-number">4.2</span> Some thoughts on security</h2>
+<p>I am not a security expert, the author of <code>agenix</code> <a href="https://github.com/ryantm/agenix#threat-modelwarnings">is not a security expert</a>, so you may be hesitant to trust <code>agenix</code> with your secrets. I’m not here to convince <em>you</em> of anything, but here are some considerations that convinced <em>me</em>.</p>
+<p>First of all, the <a href="https://github.com/FiloSottile">author of <code>age</code> itself <em>is</em> a security expert</a>. I found <a href="https://neilmadden.blog/2019/12/30/a-few-comments-on-age/">some discussion of <em>potential</em> attack vectors against <code>age</code></a>, but based on <em>my understanding</em> of <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html">the underlying reasoning</a>, this would not apply to <code>agenix</code> since we’re not dealing with not high-volume network traffic, all encrypted with the same key.</p>
+<p>Second, you can very easily audit <code>agenix</code> yourself, it’s just <a href="https://github.com/ryantm/agenix/blob/master/pkgs/agenix.nix">150 lines of pretty understandable bash in the encryption code</a>, and <a href="https://github.com/ryantm/agenix/blob/master/modules/age.nix">another 100 in the NixOS module</a>.</p>
 <p>For what it’s worth, I trust it enough to make my encrypted secrets public and then brag about it in a blog post, so at least if something breaks we’re both screwed.</p>
 <section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><div class="sourceCode" id="cb1"><pre class="sourceCode nix"><code class="sourceCode nixsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{ imports = [ <span class="st">&quot;</span>${<span class="bu">builtins</span>.<span class="bu">fetchTarball</span> <span class="st">&quot;https://github.com/ryantm/agenix/archive/master.tar.gz&quot;</span>}<span class="st">/modules/age&quot;</span> ]; }</span></code></pre></div>
-<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></li>
-<li id="fn2" role="doc-endnote"><p>A good thing for a cryptographic application!<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3" role="doc-endnote"><p>Provided you have ssh, i.e. <code>services.openssh</code>, enabled. If not, you manually have to specify <code>age.sshKeyPaths</code>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4" role="doc-endnote"><p>More info on the distinction between user and system keys <a href="https://unix.stackexchange.com/questions/439467/what-is-the-difference-between-etc-ssh-and-ssh">here</a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1" role="doc-endnote"><p>Provided you have ssh, i.e. <code>services.openssh</code>, enabled. If not, you manually have to specify <code>age.sshKeyPaths</code>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>More info on the distinction between user and system keys <a href="https://unix.stackexchange.com/questions/439467/what-is-the-difference-between-etc-ssh-and-ssh">here</a>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 <div class="header">
